@@ -2,7 +2,10 @@
 import unittest
 
 from openprocurement.auctions.core.tests.base import snitch
-
+from openprocurement.auctions.core.tests.bidder import (
+    AuctionBidderDocumentResourceTestMixin,
+    AuctionBidderDocumentWithDSResourceTestMixin
+)
 from openprocurement.auctions.flash.tests.base import (
     BaseAuctionWebTest, test_features_auction_data, test_organization
 )
@@ -17,22 +20,17 @@ from openprocurement.auctions.flash.tests.blanks.bidder_blanks import (
     bid_Administrator_change,
     # AuctionBidderFeaturesResourceTest
     features_bidder,
-    features_bidder_invalid,
     # AuctionBidderDocumentResourceTest
-    auction_bidder_document_not_found,
-    create_auction_bidder_document,
-    put_auction_bidder_document,
-    patch_auction_bidder_document,
     create_auction_bidder_document_nopending,
-    # AuctionBidderDocumentWithDSResourceTest
-    create_auction_bidder_document_json,
-    put_auction_bidder_document_json
 )
-
+from openprocurement.auctions.dgf.tests.blanks.bidder_blanks import (
+    # AuctionBidderFeaturesResourceTest
+    features_bidder_invalid,
+)
 
 class AuctionBidderResourceTest(BaseAuctionWebTest):
     initial_status = 'active.tendering'
-
+    initial_organization = test_organization
     test_create_auction_bidder_invalid = snitch(create_auction_bidder_invalid)
     test_create_auction_bidder = snitch(create_auction_bidder)
     test_patch_auction_bidder = snitch(patch_auction_bidder)
@@ -45,13 +43,14 @@ class AuctionBidderResourceTest(BaseAuctionWebTest):
 class AuctionBidderFeaturesResourceTest(BaseAuctionWebTest):
     initial_data = test_features_auction_data
     initial_status = 'active.tendering'
+    initial_organization = test_organization
     test_features_bidder = snitch(features_bidder)
     test_features_bidder_invalid = snitch(features_bidder_invalid)
 
 
-class AuctionBidderDocumentResourceTest(BaseAuctionWebTest):
+class AuctionBidderDocumentResourceTest(BaseAuctionWebTest,
+                                        AuctionBidderDocumentResourceTestMixin):
     initial_status = 'active.tendering'
-
     def setUp(self):
         super(AuctionBidderDocumentResourceTest, self).setUp()
         # Create bid
@@ -60,14 +59,12 @@ class AuctionBidderDocumentResourceTest(BaseAuctionWebTest):
         bid = response.json['data']
         self.bid_id = bid['id']
         self.bid_token = response.json['access']['token']
-    test_auction_bidder_document_not_found = snitch(auction_bidder_document_not_found)
-    test_create_auction_bidder_document = snitch(create_auction_bidder_document)
-    test_put_auction_bidder_document = snitch(put_auction_bidder_document)
-    test_patch_auction_bidder_document = snitch(patch_auction_bidder_document)
     test_create_auction_bidder_document_nopending = snitch(create_auction_bidder_document_nopending)
 
 
-class AuctionBidderDocumentWithDSResourceTest(BaseAuctionWebTest):
+class AuctionBidderDocumentWithDSResourceTest(BaseAuctionWebTest,
+                                              AuctionBidderDocumentResourceTestMixin,
+                                              AuctionBidderDocumentWithDSResourceTestMixin):
     initial_status = 'active.tendering'
 
     def setUp(self):
@@ -79,8 +76,6 @@ class AuctionBidderDocumentWithDSResourceTest(BaseAuctionWebTest):
         self.bid_id = bid['id']
         self.bid_token = response.json['access']['token']
     docservice = True
-    test_create_auction_bidder_document_json = snitch(create_auction_bidder_document_json)
-    test_put_auction_bidder_document_json = snitch(put_auction_bidder_document_json)
 
 
 def suite():
