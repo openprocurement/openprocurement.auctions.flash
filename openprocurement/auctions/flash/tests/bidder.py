@@ -6,6 +6,10 @@ from openprocurement.auctions.core.tests.bidder import (
     AuctionBidderDocumentResourceTestMixin,
     AuctionBidderDocumentWithDSResourceTestMixin
 )
+from openprocurement.auctions.core.tests.blanks.bidder_blanks import (
+    # AuctionBidderFeaturesResourceTest
+    features_bidder_invalid
+)
 from openprocurement.auctions.flash.tests.base import (
     BaseAuctionWebTest, test_features_auction_data, test_organization
 )
@@ -23,10 +27,7 @@ from openprocurement.auctions.flash.tests.blanks.bidder_blanks import (
     # AuctionBidderDocumentResourceTest
     create_auction_bidder_document_nopending,
 )
-from openprocurement.auctions.dgf.tests.blanks.bidder_blanks import (
-    # AuctionBidderFeaturesResourceTest
-    features_bidder_invalid,
-)
+
 
 class AuctionBidderResourceTest(BaseAuctionWebTest):
     initial_status = 'active.tendering'
