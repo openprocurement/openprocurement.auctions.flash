@@ -407,7 +407,6 @@ def features_bidder(self):
         bid.pop(u'owner')
         self.assertEqual(bid, i)
 
-
 # AuctionBidderDocumentResourceTest
 
 
