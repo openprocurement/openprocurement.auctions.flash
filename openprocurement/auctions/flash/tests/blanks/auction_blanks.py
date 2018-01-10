@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 # AuctionAuctionResourceTest
 
 
@@ -281,4 +282,3 @@ def post_auction_auction_2_lot(self):
     self.assertEqual(response.status, '403 Forbidden')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(response.json['errors'][0]["description"], "Can't report auction results in current (active.qualification) auction status")
-

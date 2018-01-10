@@ -25,13 +25,11 @@ class AuctionLotCancellationResourceTest(BaseAuctionWebTest,
     initial_bids = test_bids
 
 
-
 class AuctionLotsCancellationResourceTest(BaseAuctionWebTest,
                                           AuctionLotsCancellationResourceTestMixin):
     initial_status = 'active.tendering'
     initial_lots = 2 * test_lots
     initial_bids = test_bids
-
 
 
 class AuctionCancellationDocumentResourceTest(BaseAuctionWebTest,
