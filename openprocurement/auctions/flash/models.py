@@ -643,4 +643,4 @@ class Auction(SchematicsDocument, Model):
             raise ValidationError(u"lot guarantee currency should be identical to auction guarantee currency")
 
 
-FLASHAuction = Auction
+FlashAuction = Auction
