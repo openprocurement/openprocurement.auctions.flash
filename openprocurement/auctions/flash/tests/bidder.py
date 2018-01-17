@@ -40,7 +40,7 @@ class AuctionBidderResourceTest(BaseAuctionWebTest):
     test_get_auction_auctioners = snitch(get_auction_auctioners)
     test_bid_Administrator_change = snitch(bid_Administrator_change)
 
-
+    
 class AuctionBidderFeaturesResourceTest(BaseAuctionWebTest):
     initial_data = test_features_auction_data
     initial_status = 'active.tendering'

@@ -19,7 +19,7 @@ from openprocurement.auctions.core.tests.blanks.complaint_blanks import (
 class AuctionComplaintResourceTest(BaseAuctionWebTest, AuctionComplaintResourceTestMixin):
     initial_organization = test_organization
 
-
+    
 class AuctionLotAwardComplaintResourceTest(BaseAuctionWebTest):
     initial_lots = test_lots
     initial_organization = test_organization
