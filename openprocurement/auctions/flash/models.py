@@ -1,52 +1,81 @@
 # -*- coding: utf-8 -*-
-import os
-from couchdb_schematics.document import SchematicsDocument
-from datetime import datetime, timedelta, time
-from iso8601 import parse_date, ParseError
-from pytz import timezone
-from pyramid.security import Allow
-from schematics.exceptions import ConversionError, ValidationError
-from schematics.models import Model as SchematicsModel
-from schematics.transforms import whitelist, blacklist, export_loop, convert
-from schematics.types import StringType, FloatType, IntType, URLType, BooleanType, BaseType, EmailType, MD5Type
-from schematics.types.compound import ModelType, DictType, ListType as BaseListType
-from schematics.types.serializable import serializable
-from uuid import uuid4
-from barbecue import vnmax
-from zope.interface import implementer, Interface
-from openprocurement.api.models import (
-    IsoDateTimeType, ListType, Model, Value, PeriodEndRequired, SANDBOX_MODE,
-    Classification, validate_dkpp, Item, Document, Organization, Parameter, validate_parameters_uniq,
-    LotValue, Bid, Revision, Question,  Cancellation, Contract, Award, Feature,
-    Lot, schematics_embedded_role, schematics_default_role, ORA_CODES, WORKING_DAYS,
-    validate_features_uniq, validate_items_uniq, validate_lots_uniq, Period,
-    Complaint as BaseComplaint, TZ, get_now, set_parent, ComplaintModelType,
+from datetime import (
+    datetime,
+    timedelta,
+    time
 )
-from openprocurement.auctions.core.models import IAuction, get_auction
-
-STAND_STILL_TIME = timedelta(days=2)
-COMPLAINT_STAND_STILL_TIME = timedelta(days=3)
-BIDDER_TIME = timedelta(minutes=3 * 3)
-SERVICE_TIME = timedelta(minutes=5 + 3 + 3)
-AUCTION_STAND_STILL_TIME = timedelta(minutes=15)
-
-
-def read_json(name):
-    import os.path
-    from json import loads
-    curr_dir = os.path.dirname(os.path.realpath(__file__))
-    file_path = os.path.join(curr_dir, name)
-    with open(file_path) as lang_file:
-        data = lang_file.read()
-    return loads(data)
-
-
-CAV_CODES = read_json('cav.json')
-
-
-class CAVClassification(Classification):
-    scheme = StringType(required=True, default=u'CAV', choices=[u'CAV'])
-    id = StringType(required=True, choices=CAV_CODES)
+from pyramid.security import Allow
+from couchdb_schematics.document import SchematicsDocument
+from schematics.exceptions import ValidationError
+from schematics.transforms import (
+    whitelist,
+    blacklist
+)
+from schematics.types import (
+    StringType,
+    FloatType,
+    IntType,
+    URLType,
+    BooleanType,
+    BaseType
+)
+from schematics.types.compound import (
+    ModelType,
+    DictType,
+)
+from schematics.types.serializable import serializable
+from barbecue import vnmax
+from zope.interface import implementer
+from openprocurement.api.models import (
+    IsoDateTimeType,
+    ListType,
+    Model,
+    Value,
+    PeriodEndRequired,
+    SANDBOX_MODE,
+    Organization,
+    Parameter,
+    validate_parameters_uniq,
+    LotValue,
+    Bid,
+    Revision,
+    Question,
+    Cancellation,
+    Feature,
+    Lot,
+    schematics_embedded_role,
+    schematics_default_role,
+    validate_features_uniq,
+    validate_items_uniq,
+    validate_lots_uniq,
+    Period,
+    TZ,
+    get_now,
+    ComplaintModelType
+)
+from openprocurement.api.interfaces import (
+    IAwardingNextCheck
+)
+from openprocurement.api.utils import (
+    get_request_from_root
+)
+from openprocurement.auctions.core.models import (
+    IAuction,
+    get_auction,
+    flashComplaint as Complaint,
+    flashItem as Item,
+    Document,
+    flash_auction_roles,
+    flash_bid_roles,
+    calc_auction_end_time,
+    COMPLAINT_STAND_STILL_TIME
+)
+from openprocurement.auctions.core.plugins.awarding.v1.models import (
+    Award
+)
+from openprocurement.auctions.core.plugins.contracting.v1.models import (
+    Contract
+)
 
 
 class Guarantee(Model):
@@ -59,10 +88,6 @@ class AuctionPeriodEndRequired(PeriodEndRequired):
     def validate_startDate(self, data, period):
         if period and data.get('endDate') and data.get('endDate') < period:
             raise ValidationError(u"period should begin before its end")
-
-
-def calc_auction_end_time(bids, start):
-    return start + bids * BIDDER_TIME + SERVICE_TIME + AUCTION_STAND_STILL_TIME
 
 
 def rounding_shouldStartAfter(start_after, auction, use_from=datetime(2016, 6, 1, tzinfo=TZ)):
@@ -138,42 +163,6 @@ class Location(Model):
     elevation = BaseType()
 
 
-class Item(Item):
-    """A good, service, or work to be contracted."""
-    classification = ModelType(CAVClassification, required=True)
-    additionalClassifications = ListType(ModelType(Classification), default=list(), validators=[validate_dkpp]) # required=True, min_size=1,
-
-
-    def validate_relatedLot(self, data, relatedLot):
-        if relatedLot and isinstance(data['__parent__'], Model) and relatedLot not in [i.id for i in get_auction(data['__parent__']).lots]:
-            raise ValidationError(u"relatedLot should be one of lots")
-
-
-class Document(Document):
-
-    documentType = StringType(choices=[
-        'auctionNotice', 'awardNotice', 'contractNotice',
-        'notice', 'biddingDocuments', 'technicalSpecifications',
-        'evaluationCriteria', 'clarifications', 'shortlistedFirms',
-        'riskProvisions', 'billOfQuantity', 'bidders', 'conflictOfInterest',
-        'debarments', 'evaluationReports', 'winningBid', 'complaints',
-        'contractSigned', 'contractArrangements', 'contractSchedule',
-        'contractAnnexe', 'contractGuarantees', 'subContract',
-        'eligibilityCriteria', 'contractProforma', 'commercialProposal',
-        'qualificationDocuments', 'eligibilityDocuments', 'tenderNotice',
-    ])
-
-    def validate_relatedItem(self, data, relatedItem):
-        if not relatedItem and data.get('documentOf') in ['item', 'lot']:
-            raise ValidationError(u'This field is required.')
-        if relatedItem and isinstance(data['__parent__'], Model):
-            auction = get_auction(data['__parent__'])
-            if data.get('documentOf') == 'lot' and relatedItem not in [i.id for i in auction.lots]:
-                raise ValidationError(u"relatedItem should be one of lots")
-            if data.get('documentOf') == 'item' and relatedItem not in [i.id for i in auction.items]:
-                raise ValidationError(u"relatedItem should be one of items")
-
-
 class ProcuringEntity(Organization):
     """An organization."""
     class Options:
@@ -221,23 +210,10 @@ class LotValue(LotValue):
             raise ValidationError(u"relatedLot should be one of lots")
 
 
-view_bid_role = (blacklist('owner_token') + schematics_default_role)
-Administrator_bid_role = whitelist('tenderers')
-
-
 class Bid(Bid):
 
     class Options:
-        roles = {
-            'embedded': view_bid_role,
-            'view': view_bid_role,
-            'auction_view': whitelist('value', 'lotValues', 'id', 'date', 'parameters', 'participationUrl', 'owner'),
-            'active.qualification': view_bid_role,
-            'active.awarded': view_bid_role,
-            'complete': view_bid_role,
-            'unsuccessful': view_bid_role,
-            'cancelled': view_bid_role,
-        }
+        roles = flash_bid_roles
 
     tenderers = ListType(ModelType(Organization), required=True, min_size=1, max_size=1)
     parameters = ListType(ModelType(Parameter), default=list(), validators=[validate_parameters_uniq])
@@ -306,116 +282,11 @@ class Question(Question):
             if data.get('questionOf') == 'item' and relatedItem not in [i.id for i in auction.items]:
                 raise ValidationError(u"relatedItem should be one of items")
 
-view_complaint_role = (blacklist('owner_token', 'owner') + schematics_default_role)
-
-class Complaint(BaseComplaint):
-    class Options:
-        roles = {
-            'create': whitelist('author', 'title', 'description', 'status', 'relatedLot'),
-            'draft': whitelist('author', 'title', 'description', 'status'),
-            'cancellation': whitelist('cancellationReason', 'status'),
-            'satisfy': whitelist('satisfied', 'status'),
-            'answer': whitelist('resolution', 'resolutionType', 'status', 'tendererAction'),
-            'action': whitelist('tendererAction'),
-            'review': whitelist('decision', 'status'),
-            'view': view_complaint_role,
-            'view_claim': (blacklist('author') + view_complaint_role),
-            'active.enquiries': view_complaint_role,
-            'active.tendering': view_complaint_role,
-            'active.auction': view_complaint_role,
-            'active.qualification': view_complaint_role,
-            'active.awarded': view_complaint_role,
-            'complete': view_complaint_role,
-            'unsuccessful': view_complaint_role,
-            'cancelled': view_complaint_role,
-        }
-    # system
-    documents = ListType(ModelType(Document), default=list())
-
-
-    def serialize(self, role=None, context=None):
-        if role == 'view' and self.type == 'claim' and get_auction(self).status in ['active.enquiries', 'active.tendering']:
-            role = 'view_claim'
-        return super(BaseComplaint, self).serialize(role=role, context=context)
-
-    def get_role(self):
-        root = self.__parent__
-        while root.__parent__ is not None:
-            root = root.__parent__
-        request = root.request
-        data = request.json_body['data']
-        if request.authenticated_role == 'complaint_owner' and data.get('status', self.status) == 'cancelled':
-            role = 'cancellation'
-        elif request.authenticated_role == 'complaint_owner' and self.status == 'draft':
-            role = 'draft'
-        elif request.authenticated_role == 'auction_owner' and self.status == 'claim':
-            role = 'answer'
-        elif request.authenticated_role == 'auction_owner' and self.status == 'pending':
-            role = 'action'
-        elif request.authenticated_role == 'complaint_owner' and self.status == 'answered':
-            role = 'satisfy'
-        elif request.authenticated_role == 'reviewers' and self.status == 'pending':
-            role = 'review'
-        else:
-            role = 'invalid'
-        return role
-
-    def validate_relatedLot(self, data, relatedLot):
-        if relatedLot and isinstance(data['__parent__'], Model) and relatedLot not in [i.id for i in get_auction(data['__parent__']).lots]:
-            raise ValidationError(u"relatedLot should be one of lots")
-
 
 class Cancellation(Cancellation):
 
     documents = ListType(ModelType(Document), default=list())
 
-
-class Contract(Contract):
-
-    documents = ListType(ModelType(Document), default=list())
-    id = MD5Type(required=True, default=lambda: uuid4().hex)
-    awardID = StringType(required=True)
-    contractID = StringType()
-    contractNumber = StringType()
-    title = StringType()  # Contract title
-    title_en = StringType()
-    title_ru = StringType()
-    description = StringType()  # Contract description
-    description_en = StringType()
-    description_ru = StringType()
-    status = StringType(choices=['pending', 'terminated', 'active', 'cancelled'], default='pending')
-    period = ModelType(Period)
-    value = ModelType(Value)
-    dateSigned = IsoDateTimeType()
-    items = ListType(ModelType(Item))
-    suppliers = ListType(ModelType(Organization), min_size=1, max_size=1)
-    date = IsoDateTimeType()
-
-class Award(Award):
-    id = MD5Type(required=True, default=lambda: uuid4().hex)
-    bid_id = MD5Type(required=True)
-    lotID = MD5Type()
-    title = StringType()  # Award title
-    title_en = StringType()
-    title_ru = StringType()
-    description = StringType()  # Award description
-    description_en = StringType()
-    description_ru = StringType()
-    status = StringType(required=True, choices=['pending', 'unsuccessful', 'active', 'cancelled'], default='pending')
-    date = IsoDateTimeType(default=get_now)
-    value = ModelType(Value)
-    suppliers = ListType(ModelType(Organization), required=True, min_size=1, max_size=1)
-    items = ListType(ModelType(Item))
-    documents = ListType(ModelType(Document), default=list())
-    complaints = ListType(ModelType(Complaint), default=list())
-    complaintPeriod = ModelType(Period)
-
-    def validate_lotID(self, data, lotID):
-        if isinstance(data['__parent__'], Model):
-            if not lotID and data['__parent__'].lots:
-                raise ValidationError(u'This field is required.')
-            if lotID and lotID not in [i.id for i in data['__parent__'].lots]:
-                raise ValidationError(u"lotID should be one of lots")
 
 class FeatureValue(Model):
 
@@ -443,61 +314,15 @@ def validate_cav_group(items, *args):
     if items and len(set([i.classification.id[:3] for i in items])) != 1:
         raise ValidationError(u"CAV group of items be identical")
 
-
-plain_role = (blacklist('_attachments', 'revisions', 'dateModified') + schematics_embedded_role)
-create_role = (blacklist('owner_token', 'owner', '_attachments', 'revisions', 'date', 'dateModified', 'doc_id', 'auctionID', 'bids', 'documents', 'awards', 'questions', 'complaints', 'auctionUrl', 'status', 'auctionPeriod', 'awardPeriod', 'procurementMethod', 'awardCriteria', 'submissionMethod', 'cancellations', 'numberOfBidders', 'contracts') + schematics_embedded_role)
-draft_role = whitelist('status')
-edit_role = (blacklist('status', 'procurementMethodType', 'lots', 'owner_token', 'owner', '_attachments', 'revisions', 'date', 'dateModified', 'doc_id', 'auctionID', 'bids', 'documents', 'awards', 'questions', 'complaints', 'auctionUrl', 'auctionPeriod', 'awardPeriod', 'procurementMethod', 'awardCriteria', 'submissionMethod', 'mode', 'cancellations', 'numberOfBidders', 'contracts') + schematics_embedded_role)
-view_role = (blacklist('owner_token', '_attachments', 'revisions') + schematics_embedded_role)
-listing_role = whitelist('dateModified', 'doc_id')
-auction_view_role = whitelist('auctionID', 'dateModified', 'bids', 'auctionPeriod', 'minimalStep', 'auctionUrl', 'features', 'lots', 'items', 'procurementMethodType')
-auction_post_role = whitelist('bids')
-auction_patch_role = whitelist('auctionUrl', 'bids', 'lots')
-enquiries_role = (blacklist('owner_token', '_attachments', 'revisions', 'bids', 'numberOfBids') + schematics_embedded_role)
-auction_role = (blacklist('owner_token', '_attachments', 'revisions', 'bids', 'numberOfBids') + schematics_embedded_role)
-#chronograph_role = whitelist('status', 'enquiryPeriod', 'tenderPeriod', 'auctionPeriod', 'awardPeriod', 'lots')
-chronograph_role = whitelist('auctionPeriod', 'lots', 'next_check')
-chronograph_view_role = whitelist('status', 'enquiryPeriod', 'tenderPeriod', 'auctionPeriod', 'awardPeriod', 'awards', 'lots', 'doc_id', 'submissionMethodDetails', 'mode', 'numberOfBids', 'complaints', 'procurementMethodType')
-Administrator_role = whitelist('status', 'mode', 'procuringEntity','auctionPeriod', 'lots')
+class IFlashAuction(IAuction):
+    """Marker interface for Flash auctions"""
 
 
-@implementer(IAuction)
+@implementer(IFlashAuction)
 class Auction(SchematicsDocument, Model):
     """Data regarding auction process - publicly inviting prospective contractors to submit bids for evaluation and selecting a winner or winners."""
     class Options:
-        roles = {
-            'plain': plain_role,
-            'create': create_role,
-            'edit': edit_role,
-            'edit_draft': draft_role,
-            'edit_active.enquiries': edit_role,
-            'edit_active.tendering': whitelist(),
-            'edit_active.auction': whitelist(),
-            'edit_active.qualification': whitelist(),
-            'edit_active.awarded': whitelist(),
-            'edit_complete': whitelist(),
-            'edit_unsuccessful': whitelist(),
-            'edit_cancelled': whitelist(),
-            'view': view_role,
-            'listing': listing_role,
-            'auction_view': auction_view_role,
-            'auction_post': auction_post_role,
-            'auction_patch': auction_patch_role,
-            'draft': enquiries_role,
-            'active.enquiries': enquiries_role,
-            'active.tendering': enquiries_role,
-            'active.auction': auction_role,
-            'active.qualification': view_role,
-            'active.awarded': view_role,
-            'complete': view_role,
-            'unsuccessful': view_role,
-            'cancelled': view_role,
-            'chronograph': chronograph_role,
-            'chronograph_view': chronograph_view_role,
-            'Administrator': Administrator_role,
-            'default': schematics_default_role,
-            'contracting': whitelist('doc_id', 'owner'),
-        }
+        roles = flash_auction_roles
 
     def __local_roles__(self):
         roles = dict([('{}_{}'.format(self.owner, self.owner_token), 'auction_owner')])
@@ -614,6 +439,11 @@ class Auction(SchematicsDocument, Model):
 
     @serializable(serialize_when_none=False)
     def next_check(self):
+        '''
+            Serializable date field for openprocurement.chronograph.
+            Chronograph will check Auction for patching status
+            to next by workflow
+        '''
         now = get_now()
         checks = []
         if self.status == 'active.enquiries' and self.tenderPeriod.startDate:
@@ -635,49 +465,12 @@ class Auction(SchematicsDocument, Model):
                     checks.append(lot.auctionPeriod.startDate.astimezone(TZ))
                 elif now < calc_auction_end_time(lot.numberOfBids, lot.auctionPeriod.startDate).astimezone(TZ):
                     checks.append(calc_auction_end_time(lot.numberOfBids, lot.auctionPeriod.startDate).astimezone(TZ))
-        elif not self.lots and self.status == 'active.awarded' and not any([
-                                         i.status in self.block_complaint_status
-                                         for i in self.complaints
-
-                                         ]) and not any([
-                                                i.status in self.block_complaint_status
-                                                for a in self.awards
-                                                for i in a.complaints
-                                        ]):
-            standStillEnds = [
-                a.complaintPeriod.endDate.astimezone(TZ)
-                for a in self.awards
-                if a.complaintPeriod.endDate
-            ]
-
-            last_award_status = self.awards[-1].status if self.awards else ''
-            if standStillEnds and last_award_status == 'unsuccessful':
-                checks.append(max(standStillEnds))
-        elif self.lots and self.status in ['active.qualification', 'active.awarded'] and not any([
-                                                                                                    i.status in self.block_complaint_status and i.relatedLot is None
-                                                                                                    for i in self.complaints
-                                                                                                    ]):
-            for lot in self.lots:
-                if lot['status'] != 'active':
-                    continue
-                lot_awards = [i for i in self.awards if i.lotID == lot.id]
-                pending_complaints = any([
-                                             i['status'] in self.block_complaint_status and i.relatedLot == lot.id
-                                             for i in self.complaints
-                                             ])
-                pending_awards_complaints = any([
-                                                    i.status in self.block_complaint_status
-                                                    for a in lot_awards
-                                                    for i in a.complaints
-                                                    ])
-                standStillEnds = [
-                    a.complaintPeriod.endDate.astimezone(TZ)
-                    for a in lot_awards
-                    if a.complaintPeriod.endDate
-                ]
-                last_award_status = lot_awards[-1].status if lot_awards else ''
-                if not pending_complaints and not pending_awards_complaints and standStillEnds and last_award_status == 'unsuccessful':
-                    checks.append(max(standStillEnds))
+        # Use next_check part from awarding 1.0
+        request = get_request_from_root(self)
+        if request is not None:
+            awarding_check = request.registry.getAdapter(self, IAwardingNextCheck).add_awarding_checks(self)
+            if awarding_check is not None:
+                checks.append(awarding_check)  
         if self.status.startswith('active'):
             from openprocurement.api.utils import calculate_business_date
             for complaint in self.complaints:
@@ -788,3 +581,6 @@ class Auction(SchematicsDocument, Model):
     def validate_lots(self, data, value):
         if len(set([lot.guarantee.currency for lot in value if lot.guarantee])) > 1:
             raise ValidationError(u"lot guarantee currency should be identical to auction guarantee currency")
+
+
+FlashAuction = Auction
