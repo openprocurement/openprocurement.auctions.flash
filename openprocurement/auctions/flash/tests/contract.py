@@ -82,6 +82,7 @@ class Auction2LotContractResourceTest(BaseAuctionWebTest):
 class AuctionContractDocumentResourceTest(BaseAuctionWebTest, AuctionContractDocumentResourceTestMixin):
     initial_status = 'active.qualification'
     initial_bids = test_bids
+    docservice = True
 
     def setUp(self):
         super(AuctionContractDocumentResourceTest, self).setUp()
