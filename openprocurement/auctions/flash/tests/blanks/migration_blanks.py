@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from libnacl.sign import Signer
+
 from openprocurement.auctions.flash.tests.base import test_auction_data
 from openprocurement.auctions.flash.models import Auction
 from openprocurement.auctions.flash.migration import migrate_data, set_db_schema_version
@@ -24,6 +26,8 @@ def migrate_from0to1(self):
     ]
     _id, _rev = self.db.save(data)
     self.app.app.registry.docservice_url = 'http://localhost'
+    self.app.app.registry.use_docservice = True
+    self.app.app.registry.docservice_key = Signer()
     migrate_data(self.app.app.registry, 1)
     migrated_item = self.db.get(u.id)
     self.assertIn('http://localhost/get/10367238a2964ee18513f209d9b6d1d3?', migrated_item['documents'][0]['url'])
