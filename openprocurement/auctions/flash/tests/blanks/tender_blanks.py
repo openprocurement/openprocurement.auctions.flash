@@ -5,7 +5,7 @@ from datetime import timedelta
 from openprocurement.auctions.core.tests.base import JSON_RENDERER_ERROR
 from openprocurement.auctions.core.utils import get_now, SANDBOX_MODE
 
-from openprocurement.auctions.flash.models import Auction
+from openprocurement.auctions.flash.models import FlashAuction as Auction
 from openprocurement.auctions.flash.tests.base import test_auction_data, test_organization
 
 # AuctionTest

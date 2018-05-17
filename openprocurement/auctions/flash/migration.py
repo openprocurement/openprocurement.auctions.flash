@@ -6,7 +6,8 @@ from pyramid.config import Configurator
 from openprocurement.auctions.core.traversal import Root
 from openprocurement.auctions.core.utils import get_plugins
 
-from openprocurement.auctions.flash.models import Auction
+from openprocurement.auctions.flash.models import FlashAuction as Auction
+
 
 LOGGER = logging.getLogger(__name__)
 SCHEMA_VERSION = 1
