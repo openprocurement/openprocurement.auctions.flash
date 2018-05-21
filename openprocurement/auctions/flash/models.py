@@ -30,7 +30,7 @@ class IFlashAuction(IAuction):
 
 
 @implementer(IFlashAuction)
-class Auction(BaseAuction):
+class FlashAuction(BaseAuction):
     """Data regarding auction process - publicly inviting prospective contractors to submit bids for evaluation and selecting a winner or winners."""
 
     _procedure_type = "belowThreshold"
@@ -46,6 +46,3 @@ class Auction(BaseAuction):
         if period and period.startDate and data.get('enquiryPeriod') and data.get(
                 'enquiryPeriod').endDate and period.startDate < data.get('enquiryPeriod').endDate:
             raise ValidationError(u"period should begin after enquiryPeriod")
-
-
-FlashAuction = Auction

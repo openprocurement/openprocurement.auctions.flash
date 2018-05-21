@@ -3,7 +3,7 @@ from openprocurement.auctions.core.adapters import AuctionConfigurator, AuctionM
 from openprocurement.auctions.core.plugins.awarding.v1.adapters import (
     AwardingV1ConfiguratorMixin
 )
-from openprocurement.auctions.flash.models import Auction
+from openprocurement.auctions.flash.models import FlashAuction as Auction
 
 
 class AuctionFlashConfigurator(AuctionConfigurator,

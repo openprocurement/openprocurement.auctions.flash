@@ -11,7 +11,10 @@ from openprocurement.auctions.core.plugins.awarding.v1.adapters import (
     AwardingNextCheckV1,
 )
 from openprocurement.auctions.core.includeme import get_evenly_plugins
-from openprocurement.auctions.flash.models import Auction, IFlashAuction
+from openprocurement.auctions.flash.models import (
+    IFlashAuction,
+    FlashAuction as Auction
+)
 from openprocurement.auctions.flash.adapters import (
     AuctionFlashConfigurator,
     AuctionFlashManagerAdapter

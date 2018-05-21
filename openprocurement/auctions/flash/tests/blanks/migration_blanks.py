@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from openprocurement.auctions.flash.tests.base import test_auction_data
-from openprocurement.auctions.flash.models import Auction
+from openprocurement.auctions.flash.models import FlashAuction as Auction
 from openprocurement.auctions.flash.migration import migrate_data, set_db_schema_version
 
 # MigrateTest
