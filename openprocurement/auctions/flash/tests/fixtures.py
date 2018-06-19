@@ -4,6 +4,16 @@ from openprocurement.auctions.core.plugins.contracting.v3.models import (
     Prolongation,
 )
 
+PARTIAL_MOCK_CONFIG = {
+    "auctions.flash":{
+        "use_default":True,
+        "plugins":{
+            "flash.migration":None
+        },
+        "migration":False,
+        "aliases":[]
+    }
+}
 
 PROLONGATION = {
     'decisionID': 'very_importante_documente',

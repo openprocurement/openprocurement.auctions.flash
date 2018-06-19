@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import webtest
+from copy import deepcopy
 from datetime import datetime, timedelta
 
 from openprocurement.auctions.core.tests.base import (
@@ -8,6 +9,7 @@ from openprocurement.auctions.core.tests.base import (
     BaseAuctionWebTest as CoreBaseAuctionWebTest,
     base_test_bids as test_bids,  # noqa forwarded import
     test_organization,
+    MOCK_CONFIG as BASE_MOCK_CONFIG
 )
 from openprocurement.auctions.core.utils import (
     SANDBOX_MODE,
@@ -15,7 +17,9 @@ from openprocurement.auctions.core.utils import (
 )
 
 from openprocurement.auctions.flash.constants import DEFAULT_PROCUREMENT_METHOD_TYPE
+from openprocurement.auctions.flash.tests.fixtures import PARTIAL_MOCK_CONFIG
 
+from openprocurement.auctions.core.utils import connection_mock_config
 
 now = datetime.now()
 test_procuringEntity = test_organization.copy()
@@ -161,6 +165,10 @@ test_features = [
     }
 ]
 
+MOCK_CONFIG = connection_mock_config(PARTIAL_MOCK_CONFIG,
+                                     base=BASE_MOCK_CONFIG,
+                                     connector=('plugins', 'api', 'plugins',
+                                                'auctions.core', 'plugins'))
 
 class PrefixedRequestClass(webtest.app.TestRequest):
 
@@ -178,8 +186,13 @@ class BaseWebTest(CoreBaseWebTest):
     """
 
     relative_to = os.path.dirname(__file__)
+    mock_config = MOCK_CONFIG
+
+
+
 
 
 class BaseAuctionWebTest(CoreBaseAuctionWebTest):
     initial_data = test_auction_data
     relative_to = os.path.dirname(__file__)
+    mock_config = MOCK_CONFIG
