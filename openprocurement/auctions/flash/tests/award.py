@@ -38,15 +38,16 @@ from openprocurement.auctions.core.plugins.awarding.v1.tests.blanks.award_blanks
 
 
 class AuctionAwardResourceTest(BaseAuctionWebTest):
-    #initial_data = auction_data
     initial_status = 'active.qualification'
     initial_bids = test_bids
     test_create_auction_award_invalid = snitch(create_auction_award_invalid)
     test_create_auction_award = snitch(create_auction_award)
     test_patch_auction_award = snitch(patch_auction_award)
-    test_patch_auction_award_unsuccessful = snitch(patch_auction_award_unsuccessful)
+    test_patch_auction_award_unsuccessful = snitch(
+        patch_auction_award_unsuccessful)
     test_get_auction_award = snitch(get_auction_award)
-    test_patch_auction_award_Administrator_change = snitch(patch_auction_award_Administrator_change)
+    test_patch_auction_award_Administrator_change = snitch(
+        patch_auction_award_Administrator_change)
 
     def test_create_auction_award_invalid(self):
         request_path = '/auctions/{}/awards'.format(self.auction_id)
@@ -54,12 +55,18 @@ class AuctionAwardResourceTest(BaseAuctionWebTest):
         self.assertEqual(response.status, '415 Unsupported Media Type')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(response.json['status'], 'error')
-        self.assertEqual(response.json['errors'], [
-            {u'description':
-                u"Content-Type header should be one of ['application/json']", u'location': u'header', u'name': u'Content-Type'}
-        ])
+        self.assertEqual(
+            response.json['errors'],
+            [
+                {
+                    u'description': u"Content-Type header should be one of ['application/json']",
+                    u'location': u'header',
+                    u'name': u'Content-Type'}])
 
-class AuctionLotAwardResourceTest(BaseAuctionWebTest, AuctionLotAwardResourceTestMixin):
+
+class AuctionLotAwardResourceTest(
+        BaseAuctionWebTest,
+        AuctionLotAwardResourceTestMixin):
     initial_status = 'active.qualification'
     initial_lots = test_lots
     initial_bids = test_bids
@@ -67,14 +74,21 @@ class AuctionLotAwardResourceTest(BaseAuctionWebTest, AuctionLotAwardResourceTes
 
     def test_create_auction_award(self):
         request_path = '/auctions/{}/awards'.format(self.auction_id)
-        response = self.app.post_json(request_path, {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}}, status=422)
+        response = self.app.post_json(request_path,
+                                      {'data': {'suppliers': [test_organization],
+                                                'status': 'pending',
+                                                'bid_id': self.initial_bids[0]['id']}},
+                                      status=422)
         self.assertEqual(response.status, '422 Unprocessable Entity')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(response.json['errors'], [
             {"location": "body", "name": "lotID", "description": ["This field is required."]}
         ])
 
-class Auction2LotAwardResourceTest(BaseAuctionWebTest, Auction2LotAwardResourceTestMixin):
+
+class Auction2LotAwardResourceTest(
+        BaseAuctionWebTest,
+        Auction2LotAwardResourceTestMixin):
     initial_status = 'active.qualification'
     initial_lots = 2 * test_lots
     initial_bids = test_bids
@@ -82,29 +96,34 @@ class Auction2LotAwardResourceTest(BaseAuctionWebTest, Auction2LotAwardResourceT
 
 
 class AuctionAwardComplaintResourceTest(BaseAuctionWebTest):
-    #initial_data = auction_data
     initial_status = 'active.qualification'
     initial_bids = test_bids
 
     def setUp(self):
         super(AuctionAwardComplaintResourceTest, self).setUp()
         # Create award
-        response = self.app.post_json('/auctions/{}/awards'.format(
-            self.auction_id),
-            {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}})
+        response = self.app.post_json(
+            '/auctions/{}/awards'.format(
+                self.auction_id), {
+                'data': {
+                    'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}})
         award = response.json['data']
         self.award_id = award['id']
 
-    test_create_auction_award_complaint_invalid = snitch(create_auction_award_complaint_invalid)
-    test_create_auction_award_complaint = snitch(create_auction_award_complaint)
+    test_create_auction_award_complaint_invalid = snitch(
+        create_auction_award_complaint_invalid)
+    test_create_auction_award_complaint = snitch(
+        create_auction_award_complaint)
     test_patch_auction_award_complaint = snitch(patch_auction_award_complaint)
-    test_review_auction_award_complaint = snitch(review_auction_award_complaint)
+    test_review_auction_award_complaint = snitch(
+        review_auction_award_complaint)
     test_get_auction_award_complaint = snitch(get_auction_award_complaint)
     test_get_auction_award_complaints = snitch(get_auction_award_complaints)
 
 
-class AuctionLotAwardComplaintResourceTest(BaseAuctionWebTest,
-                                           AuctionLotAwardComplaintResourceTestMixin):
+class AuctionLotAwardComplaintResourceTest(
+        BaseAuctionWebTest,
+        AuctionLotAwardComplaintResourceTestMixin):
     initial_status = 'active.qualification'
     initial_lots = test_lots
     initial_bids = test_bids
@@ -114,23 +133,42 @@ class AuctionLotAwardComplaintResourceTest(BaseAuctionWebTest,
         super(AuctionLotAwardComplaintResourceTest, self).setUp()
         # Create award
         bid = self.initial_bids[0]
-        response = self.app.post_json('/auctions/{}/awards'.format(
-            self.auction_id), {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': bid['id'], 'lotID': bid['lotValues'][0]['relatedLot']}})
+        response = self.app.post_json(
+            '/auctions/{}/awards'.format(
+                self.auction_id),
+            {
+                'data': {
+                    'suppliers': [test_organization],
+                    'status': 'pending',
+                    'bid_id': bid['id'],
+                    'lotID': bid['lotValues'][0]['relatedLot']}})
         award = response.json['data']
         self.award_id = award['id']
 
     def test_create_auction_award_complaint(self):
-        response = self.app.post_json('/auctions/{}/awards/{}/complaints'.format(
-            self.auction_id, self.award_id), {'data': {'title': 'complaint title', 'description': 'complaint description', 'author': test_organization, 'status': 'claim'}})
+        response = self.app.post_json(
+            '/auctions/{}/awards/{}/complaints'.format(
+                self.auction_id,
+                self.award_id),
+            {
+                'data': {
+                    'title': 'complaint title',
+                    'description': 'complaint description',
+                    'author': test_organization,
+                    'status': 'claim'}})
         self.assertEqual(response.status, '201 Created')
         self.assertEqual(response.content_type, 'application/json')
         complaint = response.json['data']
-        self.assertEqual(complaint['author']['name'], test_organization['name'])
+        self.assertEqual(
+            complaint['author']['name'],
+            test_organization['name'])
         self.assertIn('id', complaint)
         self.assertIn(complaint['id'], response.headers['Location'])
 
-class Auction2LotAwardComplaintResourceTest(BaseAuctionWebTest,
-                                            Auction2LotAwardComplaintResourceTestMixin):
+
+class Auction2LotAwardComplaintResourceTest(
+        BaseAuctionWebTest,
+        Auction2LotAwardComplaintResourceTestMixin):
     initial_status = 'active.qualification'
     initial_lots = 2 * test_lots
     initial_bids = test_bids
@@ -140,37 +178,61 @@ class Auction2LotAwardComplaintResourceTest(BaseAuctionWebTest,
         super(Auction2LotAwardComplaintResourceTest, self).setUp()
         # Create award
         bid = self.initial_bids[0]
-        response = self.app.post_json('/auctions/{}/awards'.format(
-            self.auction_id), {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': bid['id'], 'lotID': bid['lotValues'][0]['relatedLot']}})
+        response = self.app.post_json(
+            '/auctions/{}/awards'.format(
+                self.auction_id),
+            {
+                'data': {
+                    'suppliers': [test_organization],
+                    'status': 'pending',
+                    'bid_id': bid['id'],
+                    'lotID': bid['lotValues'][0]['relatedLot']}})
         award = response.json['data']
         self.award_id = award['id']
 
     test_get_auction_lot_award_complaint = snitch(get_auction_award_complaint)
-    test_get_auction_lot_award_complaints = snitch(get_auction_award_complaints)
+    test_get_auction_lot_award_complaints = snitch(
+        get_auction_award_complaints)
 
 
-class AuctionAwardComplaintDocumentResourceTest(BaseAuctionWebTest,
-                                                AuctionAwardComplaintDocumentResourceTestMixin):
+class AuctionAwardComplaintDocumentResourceTest(
+        BaseAuctionWebTest,
+        AuctionAwardComplaintDocumentResourceTestMixin):
     initial_status = 'active.qualification'
     initial_bids = test_bids
 
     def setUp(self):
         super(AuctionAwardComplaintDocumentResourceTest, self).setUp()
         # Create award
-        response = self.app.post_json('/auctions/{}/awards'.format(
-            self.auction_id), {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}})
+        response = self.app.post_json(
+            '/auctions/{}/awards'.format(
+                self.auction_id), {
+                'data': {
+                    'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}})
         award = response.json['data']
         self.award_id = award['id']
         # Create complaint for award
-        response = self.app.post_json('/auctions/{}/awards/{}/complaints'.format(
-            self.auction_id, self.award_id), {'data': {'title': 'complaint title', 'description': 'complaint description', 'author': test_organization}})
+        response = self.app.post_json(
+            '/auctions/{}/awards/{}/complaints'.format(
+                self.auction_id,
+                self.award_id),
+            {
+                'data': {
+                    'title': 'complaint title',
+                    'description': 'complaint description',
+                    'author': test_organization}})
         complaint = response.json['data']
         self.complaint_id = complaint['id']
         self.complaint_owner_token = response.json['access']['token']
 
     def test_not_found(self):
-        response = self.app.post('/auctions/some_id/awards/some_id/complaints/some_id/documents', status=404, upload_files=[
-                                 ('file', 'name.doc', 'content')])
+        response = self.app.post(
+            '/auctions/some_id/awards/some_id/complaints/some_id/documents',
+            status=404,
+            upload_files=[
+                ('file',
+                 'name.doc',
+                 'content')])
         self.assertEqual(response.status, '404 Not Found')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(response.json['status'], 'error')
@@ -179,8 +241,10 @@ class AuctionAwardComplaintDocumentResourceTest(BaseAuctionWebTest,
                 u'url', u'name': u'auction_id'}
         ])
 
-class Auction2LotAwardComplaintDocumentResourceTest(BaseAuctionWebTest,
-                                                    Auction2LotAwardComplaintDocumentResourceTestMixin):
+
+class Auction2LotAwardComplaintDocumentResourceTest(
+        BaseAuctionWebTest,
+        Auction2LotAwardComplaintDocumentResourceTestMixin):
     initial_status = 'active.qualification'
     initial_bids = test_bids
     initial_lots = 2 * test_lots
@@ -189,23 +253,42 @@ class Auction2LotAwardComplaintDocumentResourceTest(BaseAuctionWebTest,
         super(Auction2LotAwardComplaintDocumentResourceTest, self).setUp()
         # Create award
         bid = self.initial_bids[0]
-        response = self.app.post_json('/auctions/{}/awards'.format(
-            self.auction_id), {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': bid['id'], 'lotID': bid['lotValues'][0]['relatedLot']}})
+        response = self.app.post_json(
+            '/auctions/{}/awards'.format(
+                self.auction_id),
+            {
+                'data': {
+                    'suppliers': [test_organization],
+                    'status': 'pending',
+                    'bid_id': bid['id'],
+                    'lotID': bid['lotValues'][0]['relatedLot']}})
         award = response.json['data']
         self.award_id = award['id']
         # Create complaint for award
-        response = self.app.post_json('/auctions/{}/awards/{}/complaints'.format(
-            self.auction_id, self.award_id), {'data': {'title': 'complaint title', 'description': 'complaint description', 'author': test_organization}})
+        response = self.app.post_json(
+            '/auctions/{}/awards/{}/complaints'.format(
+                self.auction_id,
+                self.award_id),
+            {
+                'data': {
+                    'title': 'complaint title',
+                    'description': 'complaint description',
+                    'author': test_organization}})
         complaint = response.json['data']
         self.complaint_id = complaint['id']
         self.complaint_owner_token = response.json['access']['token']
 
     def test_create_auction_award_complaint_document(self):
-        response = self.app.post('/auctions/{}/awards/{}/complaints/{}/documents'.format(
-            self.auction_id, self.award_id, self.complaint_id), upload_files=[('file', 'name.doc', 'content')], status=403)
+        response = self.app.post(
+            '/auctions/{}/awards/{}/complaints/{}/documents'.format(
+                self.auction_id, self.award_id, self.complaint_id), upload_files=[
+                ('file', 'name.doc', 'content')], status=403)
         self.assertEqual(response.status, '403 Forbidden')
         self.assertEqual(response.content_type, 'application/json')
-        self.assertEqual(response.json['errors'][0]["description"], "Can't add document in current (draft) complaint status")
+        self.assertEqual(
+            response.json['errors'][0]["description"],
+            "Can't add document in current (draft) complaint status")
+
 
 class AuctionAwardDocumentResourceTest(BaseAuctionWebTest,
                                        AuctionAwardDocumentResourceTestMixin):
@@ -215,14 +298,22 @@ class AuctionAwardDocumentResourceTest(BaseAuctionWebTest,
     def setUp(self):
         super(AuctionAwardDocumentResourceTest, self).setUp()
         # Create award
-        response = self.app.post_json('/auctions/{}/awards'.format(
-            self.auction_id), {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}})
+        response = self.app.post_json(
+            '/auctions/{}/awards'.format(
+                self.auction_id), {
+                'data': {
+                    'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}})
         award = response.json['data']
         self.first_award_id = award['id']
 
     def test_not_found(self):
-        response = self.app.post('/auctions/some_id/awards/some_id/documents', status=404, upload_files=[
-                                 ('file', 'name.doc', 'content')])
+        response = self.app.post(
+            '/auctions/some_id/awards/some_id/documents',
+            status=404,
+            upload_files=[
+                ('file',
+                 'name.doc',
+                 'content')])
         self.assertEqual(response.status, '404 Not Found')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(response.json['status'], 'error')
@@ -231,8 +322,10 @@ class AuctionAwardDocumentResourceTest(BaseAuctionWebTest,
                 u'url', u'name': u'auction_id'}
         ])
 
-class Auction2LotAwardDocumentResourceTest(BaseAuctionWebTest,
-                                           Auction2LotAwardDocumentResourceTestMixin):
+
+class Auction2LotAwardDocumentResourceTest(
+        BaseAuctionWebTest,
+        Auction2LotAwardDocumentResourceTestMixin):
     initial_status = 'active.qualification'
     initial_bids = test_bids
     initial_lots = 2 * test_lots
@@ -241,14 +334,23 @@ class Auction2LotAwardDocumentResourceTest(BaseAuctionWebTest,
         super(Auction2LotAwardDocumentResourceTest, self).setUp()
         # Create award
         bid = self.initial_bids[0]
-        response = self.app.post_json('/auctions/{}/awards'.format(
-            self.auction_id), {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': bid['id'], 'lotID': bid['lotValues'][0]['relatedLot']}})
+        response = self.app.post_json(
+            '/auctions/{}/awards'.format(
+                self.auction_id),
+            {
+                'data': {
+                    'suppliers': [test_organization],
+                    'status': 'pending',
+                    'bid_id': bid['id'],
+                    'lotID': bid['lotValues'][0]['relatedLot']}})
         award = response.json['data']
         self.award_id = award['id']
 
     def test_create_auction_award_document(self):
-        response = self.app.post('/auctions/{}/awards/{}/documents'.format(
-            self.auction_id, self.award_id), upload_files=[('file', 'name.doc', 'content')])
+        response = self.app.post(
+            '/auctions/{}/awards/{}/documents'.format(
+                self.auction_id, self.award_id), upload_files=[
+                ('file', 'name.doc', 'content')])
         self.assertEqual(response.status, '201 Created')
         self.assertEqual(response.content_type, 'application/json')
         doc_id = response.json["data"]['id']
@@ -256,20 +358,23 @@ class Auction2LotAwardDocumentResourceTest(BaseAuctionWebTest,
         self.assertEqual('name.doc', response.json["data"]["title"])
         key = response.json["data"]["url"].split('?')[-1]
 
-        response = self.app.get('/auctions/{}/awards/{}/documents'.format(self.auction_id, self.award_id))
+        response = self.app.get(
+            '/auctions/{}/awards/{}/documents'.format(self.auction_id, self.award_id))
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(doc_id, response.json["data"][0]["id"])
         self.assertEqual('name.doc', response.json["data"][0]["title"])
 
-        response = self.app.get('/auctions/{}/awards/{}/documents?all=true'.format(self.auction_id, self.award_id))
+        response = self.app.get(
+            '/auctions/{}/awards/{}/documents?all=true'.format(self.auction_id, self.award_id))
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(doc_id, response.json["data"][0]["id"])
         self.assertEqual('name.doc', response.json["data"][0]["title"])
 
-        response = self.app.get('/auctions/{}/awards/{}/documents/{}?download=some_id'.format(
-            self.auction_id, self.award_id, doc_id), status=404)
+        response = self.app.get(
+            '/auctions/{}/awards/{}/documents/{}?download=some_id'.format(
+                self.auction_id, self.award_id, doc_id), status=404)
         self.assertEqual(response.status, '404 Not Found')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(response.json['status'], 'error')
@@ -277,8 +382,9 @@ class Auction2LotAwardDocumentResourceTest(BaseAuctionWebTest,
             {u'description': u'Not Found', u'location': u'url', u'name': u'download'}
         ])
 
-        response = self.app.get('/auctions/{}/awards/{}/documents/{}?{}'.format(
-            self.auction_id, self.award_id, doc_id, key))
+        response = self.app.get(
+            '/auctions/{}/awards/{}/documents/{}?{}'.format(
+                self.auction_id, self.award_id, doc_id, key))
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.content_type, 'application/msword')
         self.assertEqual(response.content_length, 7)
@@ -291,31 +397,41 @@ class Auction2LotAwardDocumentResourceTest(BaseAuctionWebTest,
         self.assertEqual(doc_id, response.json["data"]["id"])
         self.assertEqual('name.doc', response.json["data"]["title"])
 
-        response = self.app.post_json('/auctions/{}/cancellations'.format(self.auction_id), {'data': {
-            'reason': 'cancellation reason',
-            'status': 'active',
-            "cancellationOf": "lot",
-            "relatedLot": self.initial_lots[0]['id']
-        }})
+        response = self.app.post_json(
+            '/auctions/{}/cancellations'.format(
+                self.auction_id),
+            {
+                'data': {
+                    'reason': 'cancellation reason',
+                    'status': 'active',
+                    "cancellationOf": "lot",
+                    "relatedLot": self.initial_lots[0]['id']}})
         self.assertEqual(response.status, '201 Created')
 
-        response = self.app.post('/auctions/{}/awards/{}/documents'.format(
-            self.auction_id, self.award_id), upload_files=[('file', 'name.doc', 'content')], status=403)
+        response = self.app.post(
+            '/auctions/{}/awards/{}/documents'.format(
+                self.auction_id, self.award_id), upload_files=[
+                ('file', 'name.doc', 'content')], status=403)
         self.assertEqual(response.status, '403 Forbidden')
         self.assertEqual(response.content_type, 'application/json')
-        self.assertEqual(response.json['errors'][0]["description"], "Can add document only in active lot status")
+        self.assertEqual(
+            response.json['errors'][0]["description"],
+            "Can add document only in active lot status")
 
     def test_put_auction_award_document(self):
-        response = self.app.post('/auctions/{}/awards/{}/documents'.format(
-            self.auction_id, self.award_id), upload_files=[('file', 'name.doc', 'content')])
+        response = self.app.post(
+            '/auctions/{}/awards/{}/documents'.format(
+                self.auction_id, self.award_id), upload_files=[
+                ('file', 'name.doc', 'content')])
         self.assertEqual(response.status, '201 Created')
         self.assertEqual(response.content_type, 'application/json')
         doc_id = response.json["data"]['id']
         self.assertIn(doc_id, response.headers['Location'])
 
-        response = self.app.put('/auctions/{}/awards/{}/documents/{}'.format(self.auction_id, self.award_id, doc_id),
-                                status=404,
-                                upload_files=[('invalid_name', 'name.doc', 'content')])
+        response = self.app.put(
+            '/auctions/{}/awards/{}/documents/{}'.format(
+                self.auction_id, self.award_id, doc_id), status=404, upload_files=[
+                ('invalid_name', 'name.doc', 'content')])
         self.assertEqual(response.status, '404 Not Found')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(response.json['status'], 'error')
@@ -324,15 +440,18 @@ class Auction2LotAwardDocumentResourceTest(BaseAuctionWebTest,
                 u'body', u'name': u'file'}
         ])
 
-        response = self.app.put('/auctions/{}/awards/{}/documents/{}'.format(
-            self.auction_id, self.award_id, doc_id), upload_files=[('file', 'name.doc', 'content2')])
+        response = self.app.put(
+            '/auctions/{}/awards/{}/documents/{}'.format(
+                self.auction_id, self.award_id, doc_id), upload_files=[
+                ('file', 'name.doc', 'content2')])
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(doc_id, response.json["data"]["id"])
         key = response.json["data"]["url"].split('?')[-1]
 
-        response = self.app.get('/auctions/{}/awards/{}/documents/{}?{}'.format(
-            self.auction_id, self.award_id, doc_id, key))
+        response = self.app.get(
+            '/auctions/{}/awards/{}/documents/{}?{}'.format(
+                self.auction_id, self.award_id, doc_id, key))
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.content_type, 'application/msword')
         self.assertEqual(response.content_length, 8)
@@ -345,43 +464,62 @@ class Auction2LotAwardDocumentResourceTest(BaseAuctionWebTest,
         self.assertEqual(doc_id, response.json["data"]["id"])
         self.assertEqual('name.doc', response.json["data"]["title"])
 
-        response = self.app.put('/auctions/{}/awards/{}/documents/{}'.format(
-            self.auction_id, self.award_id, doc_id), 'content3', content_type='application/msword')
+        response = self.app.put(
+            '/auctions/{}/awards/{}/documents/{}'.format(
+                self.auction_id,
+                self.award_id,
+                doc_id),
+            'content3',
+            content_type='application/msword')
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(doc_id, response.json["data"]["id"])
         key = response.json["data"]["url"].split('?')[-1]
 
-        response = self.app.get('/auctions/{}/awards/{}/documents/{}?{}'.format(
-            self.auction_id, self.award_id, doc_id, key))
+        response = self.app.get(
+            '/auctions/{}/awards/{}/documents/{}?{}'.format(
+                self.auction_id, self.award_id, doc_id, key))
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.content_type, 'application/msword')
         self.assertEqual(response.content_length, 8)
         self.assertEqual(response.body, 'content3')
 
-        response = self.app.post_json('/auctions/{}/cancellations'.format(self.auction_id), {'data': {
-            'reason': 'cancellation reason',
-            'status': 'active',
-            "cancellationOf": "lot",
-            "relatedLot": self.initial_lots[0]['id']
-        }})
+        response = self.app.post_json(
+            '/auctions/{}/cancellations'.format(
+                self.auction_id),
+            {
+                'data': {
+                    'reason': 'cancellation reason',
+                    'status': 'active',
+                    "cancellationOf": "lot",
+                    "relatedLot": self.initial_lots[0]['id']}})
         self.assertEqual(response.status, '201 Created')
 
-        response = self.app.put('/auctions/{}/awards/{}/documents/{}'.format(
-            self.auction_id, self.award_id, doc_id), upload_files=[('file', 'name.doc', 'content3')], status=403)
+        response = self.app.put(
+            '/auctions/{}/awards/{}/documents/{}'.format(
+                self.auction_id, self.award_id, doc_id), upload_files=[
+                ('file', 'name.doc', 'content3')], status=403)
         self.assertEqual(response.status, '403 Forbidden')
         self.assertEqual(response.content_type, 'application/json')
-        self.assertEqual(response.json['errors'][0]["description"], "Can update document only in active lot status")
+        self.assertEqual(
+            response.json['errors'][0]["description"],
+            "Can update document only in active lot status")
 
     def test_patch_auction_award_document(self):
-        response = self.app.post('/auctions/{}/awards/{}/documents'.format(
-            self.auction_id, self.award_id), upload_files=[('file', 'name.doc', 'content')])
+        response = self.app.post(
+            '/auctions/{}/awards/{}/documents'.format(
+                self.auction_id, self.award_id), upload_files=[
+                ('file', 'name.doc', 'content')])
         self.assertEqual(response.status, '201 Created')
         self.assertEqual(response.content_type, 'application/json')
         doc_id = response.json["data"]['id']
         self.assertIn(doc_id, response.headers['Location'])
 
-        response = self.app.patch_json('/auctions/{}/awards/{}/documents/{}'.format(self.auction_id, self.award_id, doc_id), {"data": {"description": "document description"}})
+        response = self.app.patch_json(
+            '/auctions/{}/awards/{}/documents/{}'.format(
+                self.auction_id, self.award_id, doc_id), {
+                "data": {
+                    "description": "document description"}})
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(doc_id, response.json["data"]["id"])
@@ -391,20 +529,31 @@ class Auction2LotAwardDocumentResourceTest(BaseAuctionWebTest,
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(doc_id, response.json["data"]["id"])
-        self.assertEqual('document description', response.json["data"]["description"])
+        self.assertEqual(
+            'document description',
+            response.json["data"]["description"])
 
-        response = self.app.post_json('/auctions/{}/cancellations'.format(self.auction_id), {'data': {
-            'reason': 'cancellation reason',
-            'status': 'active',
-            "cancellationOf": "lot",
-            "relatedLot": self.initial_lots[0]['id']
-        }})
+        response = self.app.post_json(
+            '/auctions/{}/cancellations'.format(
+                self.auction_id),
+            {
+                'data': {
+                    'reason': 'cancellation reason',
+                    'status': 'active',
+                    "cancellationOf": "lot",
+                    "relatedLot": self.initial_lots[0]['id']}})
         self.assertEqual(response.status, '201 Created')
 
-        response = self.app.patch_json('/auctions/{}/awards/{}/documents/{}'.format(self.auction_id, self.award_id, doc_id), {"data": {"description": "document description"}}, status=403)
+        response = self.app.patch_json(
+            '/auctions/{}/awards/{}/documents/{}'.format(
+                self.auction_id, self.award_id, doc_id), {
+                "data": {
+                    "description": "document description"}}, status=403)
         self.assertEqual(response.status, '403 Forbidden')
         self.assertEqual(response.content_type, 'application/json')
-        self.assertEqual(response.json['errors'][0]["description"], "Can update document only in active lot status")
+        self.assertEqual(
+            response.json['errors'][0]["description"],
+            "Can update document only in active lot status")
 
 
 def suite():
@@ -415,8 +564,10 @@ def suite():
     tests.addTest(unittest.makeSuite(AuctionAwardComplaintResourceTest))
     tests.addTest(unittest.makeSuite(AuctionLotAwardComplaintResourceTest))
     tests.addTest(unittest.makeSuite(Auction2LotAwardComplaintResourceTest))
-    tests.addTest(unittest.makeSuite(AuctionAwardComplaintDocumentResourceTest))
-    tests.addTest(unittest.makeSuite(Auction2LotAwardComplaintDocumentResourceTest))
+    tests.addTest(unittest.makeSuite(
+        AuctionAwardComplaintDocumentResourceTest))
+    tests.addTest(unittest.makeSuite(
+        Auction2LotAwardComplaintDocumentResourceTest))
     tests.addTest(unittest.makeSuite(AuctionAwardDocumentResourceTest))
     tests.addTest(unittest.makeSuite(Auction2LotAwardDocumentResourceTest))
     return tests

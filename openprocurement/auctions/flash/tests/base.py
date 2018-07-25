@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
 import webtest
-from copy import deepcopy
 from datetime import datetime, timedelta
 
-from openprocurement.auctions.core.tests.base import (
+from openprocurement.auctions.core.tests.base import (  # noqa
     BaseWebTest as CoreBaseWebTest,
     BaseAuctionWebTest as CoreBaseAuctionWebTest,
-    base_test_bids as test_bids,  # noqa forwarded import
+    base_test_bids as test_bids,
     test_organization,
     MOCK_CONFIG as BASE_MOCK_CONFIG
 )
@@ -82,47 +81,28 @@ test_features_auction_data = test_auction_data.copy()
 test_features_item = test_features_auction_data['items'][0].copy()
 test_features_item['id'] = "1"
 test_features_auction_data['items'] = [test_features_item]
-test_features_auction_data["features"] = [
-    {
-        "code": "OCDS-123454-AIR-INTAKE",
-        "featureOf": "item",
-        "relatedItem": "1",
-        "title": u"Потужність всмоктування",
-        "title_en": "Air Intake",
-        "description": u"Ефективна потужність всмоктування пилососа, в ватах (аероватах)",
-        "enum": [
-            {
-                "value": 0.1,
-                "title": u"До 1000 Вт"
-            },
-            {
-                "value": 0.15,
-                "title": u"Більше 1000 Вт"
-            }
-        ]
-    },
-    {
-        "code": "OCDS-123454-YEARS",
-        "featureOf": "tenderer",
-        "title": u"Років на ринку",
-        "title_en": "Years trading",
-        "description": u"Кількість років, які організація учасник працює на ринку",
-        "enum": [
-            {
-                "value": 0.05,
-                "title": u"До 3 років"
-            },
-            {
-                "value": 0.1,
-                "title": u"Більше 3 років, менше 5 років"
-            },
-            {
-                "value": 0.15,
-                "title": u"Більше 5 років"
-            }
-        ]
-    }
-]
+test_features_auction_data["features"] = [{"code": "OCDS-123454-AIR-INTAKE",
+                                           "featureOf": "item",
+                                           "relatedItem": "1",
+                                           "title": u"Потужність всмоктування",
+                                           "title_en": "Air Intake",
+                                           "description":
+                                               u"Ефективна потужність всмоктування пилососа, в ватах (аероватах)",
+                                           "enum": [{"value": 0.1,
+                                                     "title": u"До 1000 Вт"},
+                                                    {"value": 0.15,
+                                                     "title": u"Більше 1000 Вт"}]},
+                                          {"code": "OCDS-123454-YEARS",
+                                           "featureOf": "tenderer",
+                                           "title": u"Років на ринку",
+                                           "title_en": "Years trading",
+                                           "description": u"Кількість років, які організація учасник працює на ринку",
+                                           "enum": [{"value": 0.05,
+                                                     "title": u"До 3 років"},
+                                                    {"value": 0.1,
+                                                     "title": u"Більше 3 років, менше 5 років"},
+                                                    {"value": 0.15,
+                                                     "title": u"Більше 5 років"}]}]
 test_lots = [
     {
         'title': 'lot title',
@@ -170,6 +150,7 @@ MOCK_CONFIG = connection_mock_config(PARTIAL_MOCK_CONFIG,
                                      connector=('plugins', 'api', 'plugins',
                                                 'auctions.core', 'plugins'))
 
+
 class PrefixedRequestClass(webtest.app.TestRequest):
 
     @classmethod
@@ -187,9 +168,6 @@ class BaseWebTest(CoreBaseWebTest):
 
     relative_to = os.path.dirname(__file__)
     mock_config = MOCK_CONFIG
-
-
-
 
 
 class BaseAuctionWebTest(CoreBaseAuctionWebTest):

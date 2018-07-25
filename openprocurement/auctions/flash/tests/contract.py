@@ -4,8 +4,11 @@ import unittest
 from openprocurement.auctions.core.tests.base import snitch
 
 from openprocurement.auctions.flash.tests.base import (
-    BaseAuctionWebTest, test_auction_data, test_bids, test_lots, test_organization
-)
+    BaseAuctionWebTest,
+    test_auction_data,
+    test_bids,
+    test_lots,
+    test_organization)
 from openprocurement.auctions.core.tests.contract import (
     AuctionContractResourceTestMixin,
     AuctionContractDocumentResourceTestMixin,
@@ -20,14 +23,13 @@ from openprocurement.auctions.flash.tests.blanks.contract_blanks import (
     patch_auction_contract,
 )
 from openprocurement.auctions.core.plugins.contracting.v1.tests.contract import (
-    AuctionContractV1ResourceTestCaseMixin
-)
+    AuctionContractV1ResourceTestCaseMixin)
 
 
 class AuctionContractResourceTest(
     BaseAuctionWebTest,
     AuctionContractResourceTestMixin,
-     AuctionContractV1ResourceTestCaseMixin
+    AuctionContractV1ResourceTestCaseMixin
 ):
     initial_status = 'active.qualification'
     initial_bids = test_bids
@@ -46,14 +48,18 @@ class AuctionContractResourceTest(
                     'value': test_auction_data["value"],
                     'items': test_auction_data["items"]
                 }
-            }
+             }
         )
         award = response.json['data']
         self.award_id = award['id']
         self.award_value = award['value']
         self.award_suppliers = award['suppliers']
         self.award_items = award['items']
-        response = self.app.patch_json('/auctions/{}/awards/{}'.format(self.auction_id, self.award_id), {"data": {"status": "active"}})
+        response = self.app.patch_json(
+            '/auctions/{}/awards/{}'.format(
+                self.auction_id, self.award_id), {
+                "data": {
+                    "status": "active"}})
 
     test_patch_auction_contract = snitch(patch_auction_contract)
 
@@ -74,12 +80,15 @@ class Auction2LotContractResourceTest(BaseAuctionWebTest):
         }})
         award = response.json['data']
         self.award_id = award['id']
-        self.app.patch_json('/auctions/{}/awards/{}'.format(self.auction_id, self.award_id), {"data": {"status": "active"}})
+        self.app.patch_json('/auctions/{}/awards/{}'.format(self.auction_id,
+                                                            self.award_id), {"data": {"status": "active"}})
 
     test_patch_auction_lots_contract = snitch(patch_auction_contract_2_lots)
 
 
-class AuctionContractDocumentResourceTest(BaseAuctionWebTest, AuctionContractDocumentResourceTestMixin):
+class AuctionContractDocumentResourceTest(
+        BaseAuctionWebTest,
+        AuctionContractDocumentResourceTestMixin):
     initial_status = 'active.qualification'
     initial_bids = test_bids
     docservice = True
@@ -87,21 +96,31 @@ class AuctionContractDocumentResourceTest(BaseAuctionWebTest, AuctionContractDoc
     def setUp(self):
         super(AuctionContractDocumentResourceTest, self).setUp()
         # Create award
-        response = self.app.post_json('/auctions/{}/awards'.format(
-            self.auction_id),
-            {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}})
+        response = self.app.post_json(
+            '/auctions/{}/awards'.format(
+                self.auction_id), {
+                'data': {
+                    'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}})
         award = response.json['data']
         self.award_id = award['id']
-        response = self.app.patch_json('/auctions/{}/awards/{}'.format(self.auction_id, self.award_id),
-                                       {"data": {"status": "active"}})
+        response = self.app.patch_json(
+            '/auctions/{}/awards/{}'.format(
+                self.auction_id, self.award_id), {
+                "data": {
+                    "status": "active"}})
         # Create contract for award
-        response = self.app.post_json('/auctions/{}/contracts'.format(self.auction_id), {
-            'data': {'title': 'contract title', 'description': 'contract description', 'awardID': self.award_id}})
+        response = self.app.post_json(
+            '/auctions/{}/contracts'.format(
+                self.auction_id), {
+                'data': {
+                    'title': 'contract title', 'description': 'contract description', 'awardID': self.award_id}})
         contract = response.json['data']
         self.contract_id = contract['id']
 
 
-class Auction2LotContractDocumentResourceTest(BaseAuctionWebTest, Auction2LotContractDocumentResourceTestMixin):
+class Auction2LotContractDocumentResourceTest(
+        BaseAuctionWebTest,
+        Auction2LotContractDocumentResourceTestMixin):
     initial_status = 'active.qualification'
     initial_bids = test_bids
     initial_lots = 2 * test_lots
@@ -117,9 +136,14 @@ class Auction2LotContractDocumentResourceTest(BaseAuctionWebTest, Auction2LotCon
         }})
         award = response.json['data']
         self.award_id = award['id']
-        self.app.patch_json('/auctions/{}/awards/{}'.format(self.auction_id, self.award_id), {"data": {"status": "active"}})
+        self.app.patch_json('/auctions/{}/awards/{}'.format(self.auction_id,
+                                                            self.award_id), {"data": {"status": "active"}})
         # Create contract for award
-        response = self.app.post_json('/auctions/{}/contracts'.format(self.auction_id), {'data': {'title': 'contract title', 'description': 'contract description', 'awardID': self.award_id}})
+        response = self.app.post_json(
+            '/auctions/{}/contracts'.format(
+                self.auction_id), {
+                'data': {
+                    'title': 'contract title', 'description': 'contract description', 'awardID': self.award_id}})
         contract = response.json['data']
         self.contract_id = contract['id']
 

@@ -44,7 +44,6 @@ class AuctionCancellationDocumentResourceTest(BaseAuctionWebTest,
         self.cancellation_id = cancellation['id']
 
 
-
 def suite():
     tests = unittest.TestSuite()
     tests.addTest(unittest.makeSuite(AuctionCancellationResourceTest))

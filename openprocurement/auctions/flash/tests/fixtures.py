@@ -5,13 +5,13 @@ from openprocurement.auctions.core.plugins.contracting.v3.models import (
 )
 
 PARTIAL_MOCK_CONFIG = {
-    "auctions.flash":{
-        "use_default":True,
-        "plugins":{
-            "flash.migration":None
+    "auctions.flash": {
+        "use_default": True,
+        "plugins": {
+            "flash.migration": None
         },
-        "migration":False,
-        "aliases":[]
+        "migration": False,
+        "aliases": []
     }
 }
 
@@ -22,6 +22,7 @@ PROLONGATION = {
     'documents': [],
     'datePublished': get_now().isoformat(),
 }
+
 
 def create_award(test_case):
     # Create award
@@ -108,6 +109,7 @@ def create_award(test_case):
     test_case.award_contract_id = get_auction_response.\
         json['data']['contracts'][0]['id']
 
+
 def create_prolongation(test_case, test_case_attr):
     """Create prolongation and place it's id into test_case arrtibute
     """
@@ -122,7 +124,7 @@ def create_prolongation(test_case, test_case_attr):
 
     prolongation_data = prolongation_post_response.json.get('data', {})
     created_prolongation = Prolongation(prolongation_data)
-    created_prolongation.validate() # check returned data
+    created_prolongation.validate()  # check returned data
     test_case.assertEqual(
         created_prolongation.decisionID,
         PROLONGATION['decisionID'],
