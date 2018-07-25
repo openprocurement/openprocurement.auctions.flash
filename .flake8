@@ -6,6 +6,7 @@ exclude =
     ez_setup.py,
     docs.py,
     bin/,
+    src/,
     eggs/,
     docs/,
     src/openprocurement/api/tests,
