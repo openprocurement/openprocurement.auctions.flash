@@ -14,11 +14,12 @@ def migrate_from0to1(self):
     u.auctionID = "UA-X"
     u.store(self.db)
     data = self.db.get(u.id)
+    url = "/tenders/{}/documents/ebcb5dd7f7384b0fbfbed2dc4252fa6e?download=10367238a2964ee18513f209d9b6d1d3"
     data["documents"] = [
         {
             "id": "ebcb5dd7f7384b0fbfbed2dc4252fa6e",
             "title": "name.txt",
-            "url": "/tenders/{}/documents/ebcb5dd7f7384b0fbfbed2dc4252fa6e?download=10367238a2964ee18513f209d9b6d1d3".format(u.id),
+            "url": url.format(u.id),
             "datePublished": "2016-06-01T00:00:00+03:00",
             "dateModified": "2016-06-01T00:00:00+03:00",
             "format": "text/plain",
@@ -30,7 +31,11 @@ def migrate_from0to1(self):
     self.app.app.registry.docservice_key = Signer()
     migrate_data(self.app.app.registry, 1)
     migrated_item = self.db.get(u.id)
-    self.assertIn('http://localhost/get/10367238a2964ee18513f209d9b6d1d3?', migrated_item['documents'][0]['url'])
-    self.assertIn('Prefix={}%2Febcb5dd7f7384b0fbfbed2dc4252fa6e'.format(u.id), migrated_item['documents'][0]['url'])
+    self.assertIn(
+        'http://localhost/get/10367238a2964ee18513f209d9b6d1d3?',
+        migrated_item['documents'][0]['url'])
+    self.assertIn(
+        'Prefix={}%2Febcb5dd7f7384b0fbfbed2dc4252fa6e'.format(
+            u.id), migrated_item['documents'][0]['url'])
     self.assertIn('KeyID=', migrated_item['documents'][0]['url'])
     self.assertIn('Signature=', migrated_item['documents'][0]['url'])

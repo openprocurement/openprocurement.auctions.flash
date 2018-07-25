@@ -16,10 +16,12 @@ from openprocurement.auctions.core.tests.blanks.complaint_blanks import (
 )
 
 
-class AuctionComplaintResourceTest(BaseAuctionWebTest, AuctionComplaintResourceTestMixin):
+class AuctionComplaintResourceTest(
+        BaseAuctionWebTest,
+        AuctionComplaintResourceTestMixin):
     initial_organization = test_organization
 
-    
+
 class AuctionLotAwardComplaintResourceTest(BaseAuctionWebTest):
     initial_lots = test_lots
     initial_organization = test_organization
@@ -27,13 +29,21 @@ class AuctionLotAwardComplaintResourceTest(BaseAuctionWebTest):
     test_create_auction_lot_complaint = snitch(create_auction_complaint_lot)
 
 
-class AuctionComplaintDocumentResourceTest(BaseAuctionWebTest, InsiderAuctionComplaintDocumentResourceTestMixin):
+class AuctionComplaintDocumentResourceTest(
+        BaseAuctionWebTest,
+        InsiderAuctionComplaintDocumentResourceTestMixin):
 
     def setUp(self):
         super(AuctionComplaintDocumentResourceTest, self).setUp()
         # Create complaint
-        response = self.app.post_json('/auctions/{}/complaints'.format(
-            self.auction_id), {'data': {'title': 'complaint title', 'description': 'complaint description', 'author': test_organization}})
+        response = self.app.post_json(
+            '/auctions/{}/complaints'.format(
+                self.auction_id),
+            {
+                'data': {
+                    'title': 'complaint title',
+                    'description': 'complaint description',
+                    'author': test_organization}})
         complaint = response.json['data']
         self.complaint_id = complaint['id']
         self.complaint_owner_token = response.json['access']['token']

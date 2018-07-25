@@ -16,7 +16,10 @@ from openprocurement.auctions.core.tests.blanks.lot_blanks import (
 )
 
 from openprocurement.auctions.flash.tests.base import (
-    BaseWebTest, BaseAuctionWebTest, test_lots, test_auction_data, test_organization
+    BaseAuctionWebTest,
+    test_lots,
+    test_auction_data,
+    test_organization
 )
 from openprocurement.auctions.flash.tests.blanks.lot_blanks import (
     # AuctionLotResourceTest

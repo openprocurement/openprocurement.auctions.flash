@@ -31,14 +31,28 @@ class IFlashAuction(IAuction):
 
 @implementer(IFlashAuction)
 class FlashAuction(BaseAuction):
-    """Data regarding auction process - publicly inviting prospective contractors to submit bids for evaluation and selecting a winner or winners."""
+    """Data regarding auction process
+
+    publicly inviting prospective contractors to submit bids
+    for evaluation and selecting a winner or winners.
+    """
 
     _procedure_type = "belowThreshold"
 
-    documents = ListType(ModelType(Document), default=list())  # All documents and attachments related to the auction.
+    # All documents and attachments related to the auction.
+    documents = ListType(ModelType(Document), default=list())
     awards = ListType(ModelType(Award), default=list())
     contracts = ListType(ModelType(Contract), default=list())
-    items = ListType(ModelType(Item), required=True, min_size=1, validators=[validate_cav_group, validate_items_uniq])  # The goods and services to be purchased, broken into line items wherever possible. Items should not be duplicated, but a quantity of 2 specified instead.
+    # The goods and services to be purchased, broken into line items wherever
+    # possible. Items should not be duplicated, but a quantity of 2 specified
+    # instead.
+    items = ListType(
+        ModelType(Item),
+        required=True,
+        min_size=1,
+        validators=[
+            validate_cav_group,
+            validate_items_uniq])
     complaints = ListType(ComplaintModelType(Complaint), default=list())
     cancellations = ListType(ModelType(Cancellation), default=list())
 

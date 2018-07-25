@@ -40,7 +40,7 @@ class AuctionBidderResourceTest(BaseAuctionWebTest):
     test_get_auction_auctioners = snitch(get_auction_auctioners)
     test_bid_Administrator_change = snitch(bid_Administrator_change)
 
-    
+
 class AuctionBidderFeaturesResourceTest(BaseAuctionWebTest):
     initial_data = test_features_auction_data
     initial_status = 'active.tendering'
@@ -88,7 +88,8 @@ class AuctionBidderFeaturesResourceTest(BaseAuctionWebTest):
             }
         ]
         for i in test_features_bids:
-            response = self.app.post_json('/auctions/{}/bids'.format(self.auction_id), {'data': i})
+            response = self.app.post_json(
+                '/auctions/{}/bids'.format(self.auction_id), {'data': i})
             self.assertEqual(response.status, '201 Created')
             self.assertEqual(response.content_type, 'application/json')
             bid = response.json['data']
@@ -97,23 +98,35 @@ class AuctionBidderFeaturesResourceTest(BaseAuctionWebTest):
             bid.pop(u'owner')
             self.assertEqual(bid, i)
 
-class AuctionBidderDocumentResourceTest(BaseAuctionWebTest,
-                                        AuctionBidderDocumentResourceTestMixin):
+
+class AuctionBidderDocumentResourceTest(
+        BaseAuctionWebTest,
+        AuctionBidderDocumentResourceTestMixin):
     initial_status = 'active.tendering'
 
     def setUp(self):
         super(AuctionBidderDocumentResourceTest, self).setUp()
         # Create bid
-        response = self.app.post_json('/auctions/{}/bids'.format(
-            self.auction_id), {'data': {'tenderers': [test_organization], "value": {"amount": 500}}})
+        response = self.app.post_json(
+            '/auctions/{}/bids'.format(
+                self.auction_id), {
+                'data': {
+                    'tenderers': [test_organization], "value": {
+                        "amount": 500}}})
         bid = response.json['data']
         self.bid_id = bid['id']
         self.bid_token = response.json['access']['token']
-    test_create_auction_bidder_document_nopending = snitch(create_auction_bidder_document_nopending)
+    test_create_auction_bidder_document_nopending = snitch(
+        create_auction_bidder_document_nopending)
 
     def test_not_found(self):
-        response = self.app.post('/auctions/some_id/bids/some_id/documents', status=404, upload_files=[
-                                 ('file', 'name.doc', 'content')])
+        response = self.app.post(
+            '/auctions/some_id/bids/some_id/documents',
+            status=404,
+            upload_files=[
+                ('file',
+                 'name.doc',
+                 'content')])
         self.assertEqual(response.status, '404 Not Found')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(response.json['status'], 'error')
@@ -122,22 +135,29 @@ class AuctionBidderDocumentResourceTest(BaseAuctionWebTest,
                 u'url', u'name': u'auction_id'}
         ])
 
-class AuctionBidderDocumentWithDSResourceTest(BaseAuctionWebTest,
-                                              AuctionBidderDocumentResourceTestMixin,
-                                              AuctionBidderDocumentWithDSResourceTestMixin):
+
+class AuctionBidderDocumentWithDSResourceTest(
+        BaseAuctionWebTest,
+        AuctionBidderDocumentResourceTestMixin,
+        AuctionBidderDocumentWithDSResourceTestMixin):
     initial_status = 'active.tendering'
 
     def setUp(self):
         super(AuctionBidderDocumentWithDSResourceTest, self).setUp()
         # Create bid
-        response = self.app.post_json('/auctions/{}/bids'.format(
-            self.auction_id), {'data': {'tenderers': [test_organization], "value": {"amount": 500}}})
+        response = self.app.post_json(
+            '/auctions/{}/bids'.format(
+                self.auction_id), {
+                'data': {
+                    'tenderers': [test_organization], "value": {
+                        "amount": 500}}})
         bid = response.json['data']
         self.bid_id = bid['id']
         self.bid_token = response.json['access']['token']
     docservice = True
 
-    test_create_auction_bidder_document_nopending = snitch(create_auction_bidder_document_nopending)
+    test_create_auction_bidder_document_nopending = snitch(
+        create_auction_bidder_document_nopending)
 
 
 def suite():

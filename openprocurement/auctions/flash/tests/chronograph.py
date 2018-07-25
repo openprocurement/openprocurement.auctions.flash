@@ -98,8 +98,12 @@ class AuctionAwardComplaintSwitchResourceTest(BaseAuctionWebTest):
     def setUp(self):
         super(AuctionAwardComplaintSwitchResourceTest, self).setUp()
         # Create award
-        response = self.app.post_json('/auctions/{}/awards'.format(
-            self.auction_id), {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}})
+        response = self.app.post_json(
+            '/auctions/{}/awards'.format(
+                self.auction_id
+            ),
+            {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}}
+        )
         award = response.json['data']
         self.award_id = award['id']
 
