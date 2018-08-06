@@ -3,9 +3,6 @@ import unittest
 
 from openprocurement.auctions.core.tests.base import snitch
 
-from openprocurement.auctions.flash.tests.base import (
-    BaseAuctionWebTest, test_lots, test_bids, test_organization
-)
 from openprocurement.auctions.core.tests.blanks.chronograph_blanks import (
     # AuctionSwitchAuctionResourceTest
     switch_to_auction,
@@ -17,6 +14,11 @@ from openprocurement.auctions.core.tests.blanks.chronograph_blanks import (
     # AuctionAwardComplaintSwitchResourceTest
     switch_to_pending_award,
     switch_to_complaint_award,
+)
+
+from openprocurement.auctions.flash.tests import fixtures
+from openprocurement.auctions.flash.tests.base import (
+    BaseAuctionWebTest, test_lots, test_bids, test_organization
 )
 from openprocurement.auctions.flash.tests.blanks.chronograph_blanks import (
     # AuctionSwitchtenderingResourceTest
@@ -57,7 +59,9 @@ class AuctionSwitchUnsuccessfulResourceTest(BaseAuctionWebTest):
     test_switch_to_unsuccessful = snitch(switch_to_unsuccessful)
 
 
-class AuctionLotSwitchQualificationResourceTest(AuctionSwitchQualificationResourceTest):
+class AuctionLotSwitchQualificationResourceTest(
+    AuctionSwitchQualificationResourceTest
+):
     initial_lots = test_lots
 
 
@@ -65,7 +69,9 @@ class AuctionLotSwitchAuctionResourceTest(AuctionSwitchAuctionResourceTest):
     initial_lots = test_lots
 
 
-class AuctionLotSwitchUnsuccessfulResourceTest(AuctionSwitchUnsuccessfulResourceTest):
+class AuctionLotSwitchUnsuccessfulResourceTest(
+    AuctionSwitchUnsuccessfulResourceTest
+):
     initial_lots = test_lots
 
 
@@ -86,45 +92,40 @@ class AuctionComplaintSwitchResourceTest(BaseAuctionWebTest):
     test_switch_to_complaint = snitch(switch_to_complaint)
 
 
-class AuctionLotComplaintSwitchResourceTest(AuctionComplaintSwitchResourceTest):
+class AuctionLotComplaintSwitchResourceTest(
+    AuctionComplaintSwitchResourceTest
+):
     initial_lots = test_lots
 
 
 class AuctionAwardComplaintSwitchResourceTest(BaseAuctionWebTest):
-    initial_status = 'active.qualification'
+    initial_status = 'active.auction'
     initial_bids = test_bids
     initial_organization = test_organization
 
     def setUp(self):
         super(AuctionAwardComplaintSwitchResourceTest, self).setUp()
         # Create award
-        response = self.app.post_json(
-            '/auctions/{}/awards'.format(
-                self.auction_id
-            ),
-            {'data': {'suppliers': [test_organization], 'status': 'pending', 'bid_id': self.initial_bids[0]['id']}}
-        )
-        award = response.json['data']
-        self.award_id = award['id']
+        fixtures.create_award(self)
 
-    test_auction_award_complaint_switch_to_pending = snitch(switch_to_pending_award)
-    test_auction_award_complaint_switch_to_complaint = snitch(switch_to_complaint_award)
+    test_auction_award_complaint_switch_to_pending = snitch(
+        switch_to_pending_award
+    )
+    test_auction_award_complaint_switch_to_complaint = snitch(
+        switch_to_complaint_award
+    )
 
 
-class AuctionLotAwardComplaintSwitchResourceTest(AuctionAwardComplaintSwitchResourceTest):
+class AuctionLotAwardComplaintSwitchResourceTest(
+    AuctionAwardComplaintSwitchResourceTest
+):
+    initial_status = 'active.auction'
     initial_lots = test_lots
 
     def setUp(self):
         super(AuctionAwardComplaintSwitchResourceTest, self).setUp()
         # Create award
-        response = self.app.post_json('/auctions/{}/awards'.format(self.auction_id), {'data': {
-            'suppliers': [test_organization],
-            'status': 'pending',
-            'bid_id': self.initial_bids[0]['id'],
-            'lotID': self.initial_bids[0]['lotValues'][0]['relatedLot']
-        }})
-        award = response.json['data']
-        self.award_id = award['id']
+        fixtures.create_award(self)
 
 
 def suite():
@@ -133,7 +134,9 @@ def suite():
     tests.addTest(unittest.makeSuite(AuctionSwitchQualificationResourceTest))
     tests.addTest(unittest.makeSuite(AuctionSwitchAuctionResourceTest))
     tests.addTest(unittest.makeSuite(AuctionSwitchUnsuccessfulResourceTest))
-    tests.addTest(unittest.makeSuite(AuctionLotSwitchQualificationResourceTest))
+    tests.addTest(unittest.makeSuite(
+        AuctionLotSwitchQualificationResourceTest
+    ))
     tests.addTest(unittest.makeSuite(AuctionLotSwitchAuctionResourceTest))
     tests.addTest(unittest.makeSuite(AuctionLotSwitchUnsuccessfulResourceTest))
     tests.addTest(unittest.makeSuite(AuctionAuctionPeriodResourceTest))
@@ -141,7 +144,9 @@ def suite():
     tests.addTest(unittest.makeSuite(AuctionComplaintSwitchResourceTest))
     tests.addTest(unittest.makeSuite(AuctionLotComplaintSwitchResourceTest))
     tests.addTest(unittest.makeSuite(AuctionAwardComplaintSwitchResourceTest))
-    tests.addTest(unittest.makeSuite(AuctionLotAwardComplaintSwitchResourceTest))
+    tests.addTest(unittest.makeSuite(
+        AuctionLotAwardComplaintSwitchResourceTest
+    ))
     return tests
 
 
