@@ -10,8 +10,9 @@ def create_auction_document(self):
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(response.json, {"data": []})
 
-    response = self.app.post('/auctions/{}/documents'.format(
-        self.auction_id), upload_files=[('file', u'укр.doc', 'content')])
+    response = self.app.post('/auctions/{}/documents?acc_token={}'.format(
+        self.auction_id, self.auction_token
+    ), upload_files=[('file', u'укр.doc', 'content')])
     self.assertEqual(response.status, '201 Created')
     self.assertEqual(response.content_type, 'application/json')
     doc_id = response.json["data"]['id']
@@ -78,10 +79,12 @@ def create_auction_document(self):
     self.assertEqual(u'укр.doc', response.json["data"]["title"])
 
     response = self.app.post(
-        '/auctions/{}/documents?acc_token=acc_token'.format(
-            self.auction_id), upload_files=[
-            ('file', u'укр.doc'.encode(
-                "ascii", "xmlcharrefreplace"), 'content')])
+        '/auctions/{}/documents?acc_token={}'.format(
+            self.auction_id, self.auction_token
+        ), upload_files=[('file', u'укр.doc'.encode(
+            "ascii", "xmlcharrefreplace"
+        ), 'content')]
+    )
     self.assertEqual(response.status, '201 Created')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(u'укр.doc', response.json["data"]["title"])
@@ -92,9 +95,10 @@ def create_auction_document(self):
     self.set_status('active.tendering')
 
     response = self.app.post(
-        '/auctions/{}/documents'.format(
-            self.auction_id), upload_files=[
-            ('file', u'укр.doc', 'content')], status=403)
+        '/auctions/{}/documents?acc_token={}'.format(
+            self.auction_id, self.auction_token
+        ), upload_files=[('file', u'укр.doc', 'content')], status=403
+    )
     self.assertEqual(response.status, '403 Forbidden')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(
@@ -127,7 +131,8 @@ def put_auction_document(self):
     environ['CONTENT_TYPE'] = 'multipart/form-data; boundary=BOUNDARY'
     environ['REQUEST_METHOD'] = 'POST'
     req = self.app.RequestClass.blank(self.app._remove_fragment(
-        '/auctions/{}/documents'.format(self.auction_id)), environ)
+        '/auctions/{}/documents?acc_token={}'.format(self.auction_id, self.auction_token)
+    ), environ)
     req.environ['wsgi.input'] = BytesIO(body.encode(req.charset or 'utf8'))
     req.content_length = len(body)
     response = self.app.do_request(req)
@@ -142,9 +147,10 @@ def put_auction_document(self):
     self.assertIn(doc_id, response.headers['Location'])
 
     response = self.app.put(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id, doc_id), upload_files=[
-            ('file', 'name  name.doc', 'content2')])
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), upload_files=[('file', 'name  name.doc', 'content2')]
+    )
     self.assertEqual(response.status, '200 OK')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(doc_id, response.json["data"]["id"])
@@ -197,8 +203,9 @@ def put_auction_document(self):
     self.assertEqual(dateModified, response.json["data"][0]['dateModified'])
     self.assertEqual(dateModified2, response.json["data"][1]['dateModified'])
 
-    response = self.app.post('/auctions/{}/documents'.format(
-        self.auction_id), upload_files=[('file', 'name.doc', 'content')])
+    response = self.app.post('/auctions/{}/documents?acc_token={}'.format(
+        self.auction_id, self.auction_token
+    ), upload_files=[('file', 'name.doc', 'content')])
     self.assertEqual(response.status, '201 Created')
     self.assertEqual(response.content_type, 'application/json')
     doc_id = response.json["data"]['id']
@@ -212,9 +219,10 @@ def put_auction_document(self):
     self.assertEqual(dateModified, response.json["data"][1]['dateModified'])
 
     response = self.app.put(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id, doc_id), status=404, upload_files=[
-            ('invalid_name', 'name.doc', 'content')])
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), status=404, upload_files=[('invalid_name', 'name.doc', 'content')]
+    )
     self.assertEqual(response.status, '404 Not Found')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(response.json['status'], 'error')
@@ -224,11 +232,11 @@ def put_auction_document(self):
     ])
 
     response = self.app.put(
-        '/auctions/{}/documents/{}'.format(
+        '/auctions/{}/documents/{}?acc_token={}'.format(
             self.auction_id,
-            doc_id),
-        'content3',
-        content_type='application/msword')
+            doc_id, self.auction_token
+        ), 'content3', content_type='application/msword'
+    )
     self.assertEqual(response.status, '200 OK')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(doc_id, response.json["data"]["id"])
@@ -264,19 +272,22 @@ def put_auction_document(self):
     self.set_status('active.tendering')
 
     response = self.app.put(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id, doc_id), upload_files=[
-            ('file', 'name.doc', 'content3')], status=403)
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), upload_files=[('file', 'name.doc', 'content3')], status=403
+    )
     self.assertEqual(response.status, '403 Forbidden')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(
         response.json['errors'][0]["description"],
-        "Can't update document in current (active.tendering) auction status")
+        "Can't update document in current (active.tendering) auction status"
+    )
 
 
 def patch_auction_document(self):
-    response = self.app.post('/auctions/{}/documents'.format(
-        self.auction_id), upload_files=[('file', str(Header(u'укр.doc', 'utf-8')), 'content')])
+    response = self.app.post('/auctions/{}/documents?acc_token={}'.format(
+        self.auction_id, self.auction_token
+    ), upload_files=[('file', str(Header(u'укр.doc', 'utf-8')), 'content')])
     self.assertEqual(response.status, '201 Created')
     self.assertEqual(response.content_type, 'application/json')
     doc_id = response.json["data"]['id']
@@ -285,10 +296,10 @@ def patch_auction_document(self):
     self.assertNotIn("documentType", response.json["data"])
 
     response = self.app.patch_json(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id, doc_id), {
-            "data": {
-                "documentOf": "lot"}}, status=422)
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), {"data": {"documentOf": "lot"}}, status=422
+    )
     self.assertEqual(response.status, '422 Unprocessable Entity')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(response.json['status'], 'error')
@@ -296,10 +307,10 @@ def patch_auction_document(self):
                      u'This field is required.'], u'location': u'body', u'name': u'relatedItem'}, ])
 
     response = self.app.patch_json(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id, doc_id), {
-            "data": {
-                "documentOf": "lot", "relatedItem": '0' * 32}}, status=422)
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), {"data": {"documentOf": "lot", "relatedItem": '0' * 32}}, status=422
+    )
     self.assertEqual(response.status, '422 Unprocessable Entity')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(response.json['status'], 'error')
@@ -307,10 +318,10 @@ def patch_auction_document(self):
                      u'relatedItem should be one of lots'], u'location': u'body', u'name': u'relatedItem'}])
 
     response = self.app.patch_json(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id, doc_id), {
-            "data": {
-                "documentOf": "item", "relatedItem": '0' * 32}}, status=422)
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), {"data": {"documentOf": "item", "relatedItem": '0' * 32}}, status=422
+    )
     self.assertEqual(response.status, '422 Unprocessable Entity')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(response.json['status'], 'error')
@@ -318,10 +329,11 @@ def patch_auction_document(self):
                      u'relatedItem should be one of items'], u'location': u'body', u'name': u'relatedItem'}])
 
     response = self.app.patch_json(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id, doc_id), {
-            "data": {
-                "description": "document description", "documentType": 'auctionNotice'}})
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), {"data": {"description": "document description",
+                     "documentType": 'auctionNotice'}}
+    )
     self.assertEqual(response.status, '200 OK')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(doc_id, response.json["data"]["id"])
@@ -329,10 +341,10 @@ def patch_auction_document(self):
     self.assertEqual(response.json["data"]["documentType"], 'auctionNotice')
 
     response = self.app.patch_json(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id, doc_id), {
-            "data": {
-                "documentType": None}})
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), {"data": {"documentType": None}}
+    )
     self.assertEqual(response.status, '200 OK')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(doc_id, response.json["data"]["id"])
@@ -350,21 +362,24 @@ def patch_auction_document(self):
     self.set_status('active.tendering')
 
     response = self.app.patch_json(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id, doc_id), {
-            "data": {
-                "description": "document description"}}, status=403)
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), {"data": {"description": "document description"}}, status=403
+    )
     self.assertEqual(response.status, '403 Forbidden')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(
         response.json['errors'][0]["description"],
-        "Can't update document in current (active.tendering) auction status")
+        "Can't update document in current (active.tendering) auction status"
+    )
 
 # AuctionDocumentWithDSResourceTest
 
 
 def create_auction_document_json(self):
-    response = self.app.post_json('/auctions/{}/documents'.format(self.auction_id),
+    response = self.app.post_json('/auctions/{}/documents?acc_token={}'.format(
+        self.auction_id, self.auction_token
+    ),
                                   {'data': {
                                       'title': u'укр.doc',
                                       'url': self.generate_docservice_url(),
@@ -418,7 +433,9 @@ def create_auction_document_json(self):
 
     self.set_status('active.tendering')
 
-    response = self.app.post_json('/auctions/{}/documents'.format(self.auction_id),
+    response = self.app.post_json('/auctions/{}/documents?acc_token={}'.format(
+        self.auction_id, self.auction_token
+    ),
                                   {'data': {
                                       'title': u'укр.doc',
                                       'url': self.generate_docservice_url(),
@@ -433,7 +450,9 @@ def create_auction_document_json(self):
 
 
 def put_auction_document_json(self):
-    response = self.app.post_json('/auctions/{}/documents'.format(self.auction_id),
+    response = self.app.post_json('/auctions/{}/documents?acc_token={}'.format(
+        self.auction_id, self.auction_token
+    ),
                                   {'data': {
                                       'title': u'укр.doc',
                                       'url': self.generate_docservice_url(),
@@ -449,16 +468,13 @@ def put_auction_document_json(self):
     self.assertIn(doc_id, response.headers['Location'])
 
     response = self.app.put_json(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id,
-            doc_id),
-        {
-            'data': {
-                'title': u'name.doc',
-                'url': self.generate_docservice_url(),
-                'hash': 'md5:' + '0' * 32,
-                'format': 'application/msword',
-            }})
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), {'data': {'title': u'name.doc',
+                     'url': self.generate_docservice_url(),
+                     'hash': 'md5:' + '0' * 32,
+                     'format': 'application/msword'}}
+    )
     self.assertEqual(response.status, '200 OK')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(doc_id, response.json["data"]["id"])
@@ -501,16 +517,13 @@ def put_auction_document_json(self):
     self.assertEqual(dateModified2, response.json["data"][1]['dateModified'])
 
     response = self.app.post_json(
-        '/auctions/{}/documents'.format(
-            self.auction_id,
-            doc_id),
-        {
-            'data': {
-                'title': 'name.doc',
-                'url': self.generate_docservice_url(),
-                'hash': 'md5:' + '0' * 32,
-                'format': 'application/msword',
-            }})
+        '/auctions/{}/documents?acc_token={}'.format(
+            self.auction_id, self.auction_token
+        ), {'data': {'title': 'name.doc',
+                     'url': self.generate_docservice_url(),
+                     'hash': 'md5:' + '0' * 32,
+                     'format': 'application/msword'}}
+    )
     self.assertEqual(response.status, '201 Created')
     self.assertEqual(response.content_type, 'application/json')
     doc_id = response.json["data"]['id']
@@ -524,16 +537,14 @@ def put_auction_document_json(self):
     self.assertEqual(dateModified, response.json["data"][1]['dateModified'])
 
     response = self.app.put_json(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id,
-            doc_id),
-        {
-            'data': {
-                'title': u'укр.doc',
-                'url': self.generate_docservice_url(),
-                'hash': 'md5:' + '0' * 32,
-                'format': 'application/msword',
-            }})
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), {'data': {'title': u'укр.doc',
+                     'url': self.generate_docservice_url(),
+                     'hash': 'md5:' + '0' * 32,
+                     'format': 'application/msword'}
+            }
+    )
     self.assertEqual(response.status, '200 OK')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(doc_id, response.json["data"]["id"])
@@ -558,19 +569,17 @@ def put_auction_document_json(self):
     self.set_status('active.tendering')
 
     response = self.app.put_json(
-        '/auctions/{}/documents/{}'.format(
-            self.auction_id,
-            doc_id),
-        {
-            'data': {
-                'title': u'укр.doc',
-                'url': self.generate_docservice_url(),
-                'hash': 'md5:' + '0' * 32,
-                'format': 'application/msword',
-            }},
-        status=403)
+        '/auctions/{}/documents/{}?acc_token={}'.format(
+            self.auction_id, doc_id, self.auction_token
+        ), {'data': {'title': u'укр.doc',
+                     'url': self.generate_docservice_url(),
+                     'hash': 'md5:' + '0' * 32,
+                     'format': 'application/msword'}
+            }, status=403
+    )
     self.assertEqual(response.status, '403 Forbidden')
     self.assertEqual(response.content_type, 'application/json')
     self.assertEqual(
         response.json['errors'][0]["description"],
-        "Can't update document in current (active.tendering) auction status")
+        "Can't update document in current (active.tendering) auction status"
+    )

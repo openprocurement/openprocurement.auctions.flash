@@ -27,6 +27,7 @@ from openprocurement.auctions.flash.tests.blanks.lot_blanks import (
 )
 
 
+@unittest.skip('lot creation by broker is not allowed')
 class AuctionLotResourceTest(BaseAuctionWebTest, AuctionLotResourceTestMixin):
     test_lots = test_lots
     test_auction_data = test_auction_data
@@ -58,7 +59,9 @@ class AuctionLotFeatureBidderResourceTest(BaseAuctionWebTest):
     def setUp(self):
         super(AuctionLotFeatureBidderResourceTest, self).setUp()
         self.lot_id = self.initial_lots[0]['id']
-        response = self.app.patch_json('/auctions/{}'.format(self.auction_id), {"data": {
+        response = self.app.patch_json('/auctions/{}?acc_token={}'.format(
+            self.auction_id, self.auction_token
+        ), {"data": {
             "items": [
                 {
                     'relatedLot': self.lot_id,
