@@ -22,7 +22,6 @@ from openprocurement.auctions.core.plugins.contracting.v1.tests.contract import 
 from openprocurement.auctions.flash.tests import fixtures
 from openprocurement.auctions.flash.tests.base import (
     BaseAuctionWebTest,
-    test_auction_data,
     test_bids,
     test_lots,
     test_organization
@@ -96,7 +95,7 @@ class AuctionContractDocumentResourceTest(
     def setUp(self):
         super(AuctionContractDocumentResourceTest, self).setUp()
         # Create award
-        fixtures.create_award( self)
+        fixtures.create_award(self)
         # Create contract for award
         self.app.patch_json('/auctions/{}/awards/{}?acc_token={}'.format(
             self.auction_id,
@@ -120,7 +119,7 @@ class Auction2LotContractDocumentResourceTest(
     def setUp(self):
         super(Auction2LotContractDocumentResourceTest, self).setUp()
         # Create award
-        fixtures.create_award( self)
+        fixtures.create_award(self)
         # Create contract for award
         self.app.patch_json(
             '/auctions/{}/awards/{}?acc_token={}'.format(

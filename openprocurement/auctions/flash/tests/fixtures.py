@@ -78,7 +78,6 @@ def create_award(test_case):
     test_case.second_bid_token = test_case.initial_bids_tokens.items()[1][1]
     test_case.app.authorization = authorization
 
-
     # response = test_case.app.post(
     #     '/auctions/{}/awards/{}/documents?acc_token={}'.format(
     #         test_case.auction_id,

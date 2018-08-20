@@ -778,7 +778,8 @@ class AuctionMultipleLotAuctionResourceTest(AuctionAuctionResourceTest):
 
         for lot in self.initial_lots:
             response = self.app.patch_json(
-                '/auctions/{}/auction/{}'.format(self.auction_id, lot['id']), {'data': patch_data})
+                '/auctions/{}/auction/{}'.format(self.auction_id, lot['id']), {'data': patch_data}
+            )
             self.assertEqual(response.status, '200 OK')
             self.assertEqual(response.content_type, 'application/json')
             auction = response.json['data']
@@ -794,12 +795,15 @@ class AuctionMultipleLotAuctionResourceTest(AuctionAuctionResourceTest):
             patch_data["lots"][0]['auctionUrl'])
 
         self.app.authorization = ('Basic', ('broker', ''))
-        response = self.app.post_json('/auctions/{}/cancellations?acc_token={}'.format(self.auction_id, self.auction_token), {'data': {
-            'reason': 'cancellation reason',
-            'status': 'active',
-            "cancellationOf": "lot",
-            "relatedLot": self.initial_lots[0]['id']
-        }})
+        response = self.app.post_json(
+            '/auctions/{}/cancellations?acc_token={}'.format(
+                self.auction_id, self.auction_token
+            ), {'data': {'reason': 'cancellation reason',
+                         'status': 'active',
+                         'cancellationOf': 'lot',
+                         'relatedLot': self.initial_lots[0]['id']}
+                }
+        )
         self.assertEqual(response.status, '201 Created')
 
         self.app.authorization = ('Basic', ('auction', ''))

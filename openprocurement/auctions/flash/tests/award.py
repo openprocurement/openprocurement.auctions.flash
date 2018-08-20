@@ -145,7 +145,7 @@ class AuctionLotAwardComplaintResourceTest(
     def setUp(self):
         super(AuctionLotAwardComplaintResourceTest, self).setUp()
         # Create award
-        fixtures.create_award( self)
+        fixtures.create_award(self)
 
     def test_create_auction_award_complaint(self):
         response = self.app.post_json(
@@ -181,7 +181,7 @@ class Auction2LotAwardComplaintResourceTest(
     def setUp(self):
         super(Auction2LotAwardComplaintResourceTest, self).setUp()
         # Create award
-        fixtures.create_award( self)
+        fixtures.create_award(self)
 
     test_get_auction_lot_award_complaint = snitch(get_auction_award_complaint)
     test_get_auction_lot_award_complaints = snitch(
@@ -320,8 +320,8 @@ class Auction2LotAwardDocumentResourceTest(
         response = self.app.post(
             '/auctions/{}/awards/{}/documents?acc_token={}'.format(
                 self.auction_id, self.award_id, self.auction_token
-        ), upload_files=[
-                ('file', 'name.doc', 'content')])
+            ), upload_files=[('file', 'name.doc', 'content')]
+        )
         self.assertEqual(response.status, '201 Created')
         self.assertEqual(response.content_type, 'application/json')
         doc_id = response.json["data"]['id']
@@ -393,8 +393,8 @@ class Auction2LotAwardDocumentResourceTest(
         response = self.app.post(
             '/auctions/{}/awards/{}/documents?acc_token={}'.format(
                 self.auction_id, self.award_id, self.auction_token
-        ), upload_files=[
-                ('file', 'name.doc', 'content')], status=403)
+            ), upload_files=[('file', 'name.doc', 'content')], status=403
+        )
         self.assertEqual(response.status, '403 Forbidden')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(
@@ -405,8 +405,8 @@ class Auction2LotAwardDocumentResourceTest(
         response = self.app.post(
             '/auctions/{}/awards/{}/documents?acc_token={}'.format(
                 self.auction_id, self.award_id, self.auction_token
-        ), upload_files=[
-                ('file', 'name.doc', 'content')])
+            ), upload_files=[('file', 'name.doc', 'content')]
+        )
         self.assertEqual(response.status, '201 Created')
         self.assertEqual(response.content_type, 'application/json')
         doc_id = response.json["data"]['id']
@@ -459,9 +459,8 @@ class Auction2LotAwardDocumentResourceTest(
                 self.auction_id,
                 self.award_id,
                 doc_id, self.auction_token
-        ),
-            'content3',
-            content_type='application/msword')
+            ), 'content3', content_type='application/msword'
+        )
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(doc_id, response.json["data"]["id"])
@@ -491,8 +490,8 @@ class Auction2LotAwardDocumentResourceTest(
         response = self.app.put(
             '/auctions/{}/awards/{}/documents/{}?acc_token={}'.format(
                 self.auction_id, self.award_id, doc_id, self.auction_token
-        ), upload_files=[
-                ('file', 'name.doc', 'content3')], status=403)
+            ), upload_files=[('file', 'name.doc', 'content3')], status=403
+        )
         self.assertEqual(response.status, '403 Forbidden')
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(
@@ -503,8 +502,8 @@ class Auction2LotAwardDocumentResourceTest(
         response = self.app.post(
             '/auctions/{}/awards/{}/documents?acc_token={}'.format(
                 self.auction_id, self.award_id, self.auction_token
-        ), upload_files=[
-                ('file', 'name.doc', 'content')])
+            ), upload_files=[('file', 'name.doc', 'content')]
+        )
         self.assertEqual(response.status, '201 Created')
         self.assertEqual(response.content_type, 'application/json')
         doc_id = response.json["data"]['id']
@@ -536,12 +535,11 @@ class Auction2LotAwardDocumentResourceTest(
             '/auctions/{}/cancellations?acc_token={}'.format(
                 self.auction_id,
                 self.auction_token
-            ),
-                {'data': {
-                'reason': 'cancellation reason',
-                'status': 'active',
-                "cancellationOf": "lot",
-                "relatedLot": self.initial_lots[0]['id']}}
+            ), {'data': {'reason': 'cancellation reason',
+                         'status': 'active',
+                         'cancellationOf': 'lot',
+                         'relatedLot': self.initial_lots[0]['id']}
+                }
         )
         self.assertEqual(response.status, '201 Created')
 
