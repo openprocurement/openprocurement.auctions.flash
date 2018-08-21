@@ -20,6 +20,7 @@ from openprocurement.auctions.flash.adapters import (
     AuctionFlashManagerAdapter
 )
 from openprocurement.auctions.flash.constants import (
+    DEFAULT_LEVEL_OF_ACCREDITATION,
     DEFAULT_PROCUREMENT_METHOD_TYPE,
     VIEW_LOCATIONS,
 )
@@ -56,3 +57,9 @@ def includeme(config, plugin_map):
     # migrate data
     if plugin_map['migration'] and not os.environ.get('MIGRATION_SKIP'):
         get_evenly_plugins(config, plugin_map['plugins'], 'openprocurement.auctions.flash.plugins')
+
+    # add accreditation level
+    if not plugin_map.get('accreditation'):
+        config.registry.accreditation['auction'][Auction._internal_type] = DEFAULT_LEVEL_OF_ACCREDITATION
+    else:
+        config.registry.accreditation['auction'][Auction._internal_type] = plugin_map['accreditation']

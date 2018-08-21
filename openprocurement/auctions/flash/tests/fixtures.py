@@ -11,7 +11,11 @@ PARTIAL_MOCK_CONFIG = {
             "flash.migration": None
         },
         "migration": False,
-        "aliases": []
+        "aliases": [],
+        "accreditation": {
+            "create": [1],
+            "edit": [2]
+        }
     }
 }
 

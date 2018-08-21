@@ -37,7 +37,7 @@ class FlashAuction(BaseAuction):
     for evaluation and selecting a winner or winners.
     """
 
-    _procedure_type = "belowThreshold"
+    _internal_type = "belowThreshold"
 
     # All documents and attachments related to the auction.
     documents = ListType(ModelType(Document), default=list())
