@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import unittest
 from openprocurement.auctions.core.tests.base import snitch
-from openprocurement.auctions.core.tests.tender import AuctionResourceTestMixin
+from openprocurement.auctions.core.tests.tender import (
+    AuctionResourceTestMixin,
+    ExtractCredentialsMixin
+)
 from openprocurement.auctions.core.tests.blanks.tender_blanks import (
     # AuctionTest
     simple_add_auction,
@@ -70,11 +73,16 @@ class AuctionProcessTest(BaseAuctionWebTest):
     test_first_bid_auction = snitch(first_bid_auction)
 
 
+class AuctionExtractCredentialsTest(BaseAuctionWebTest, ExtractCredentialsMixin):
+    pass
+
+
 def suite():
     tests = unittest.TestSuite()
     tests.addTest(unittest.makeSuite(AuctionTest))
     tests.addTest(unittest.makeSuite(AuctionResourceTest))
     tests.addTest(unittest.makeSuite(AuctionProcessTest))
+    tests.addTest(unittest.makeSuite(AuctionExtractCredentialsTest))
     return tests
 
 
