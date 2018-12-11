@@ -2,14 +2,13 @@
 from openprocurement.api.constants import TZ
 from logging import getLogger
 from pkg_resources import get_distribution
-from openprocurement.api.utils import (
-    context_unpack,
-    get_now
-)
 from openprocurement.auctions.core.utils import (
     check_complaint_status,
     remove_draft_bids,
-    check_bids
+    check_bids,
+    context_unpack,
+    get_now,
+    log_auction_status_change
 )
 from openprocurement.auctions.core.interfaces import IAuctionManager
 
@@ -31,48 +30,34 @@ def check_status_flash(request):
         and auction.enquiryPeriod.endDate.astimezone(TZ)
         <= now
     ):
-        LOGGER.info(
-            'Switched auction %s to %s', auction.id, 'active.tendering', extra=context_unpack(
-                request, {
-                    'MESSAGE_ID': 'switched_auction_active.tendering'}))
         auction.status = 'active.tendering'
-        return
+        log_auction_status_change(request, auction, auction.status)
+        return True
     elif (
         auction.status == 'active.enquiries'
         and auction.tenderPeriod.startDate
         and auction.tenderPeriod.startDate.astimezone(TZ)
         <= now
     ):
-        LOGGER.info(
-            'Switched auction %s to %s', auction.id, 'active.tendering', extra=context_unpack(
-                request, {
-                    'MESSAGE_ID': 'switched_auction_active.tendering'}))
         auction.status = 'active.tendering'
-        return
+        log_auction_status_change(request, auction, auction.status)
+        return True
     elif not auction.lots and auction.status == 'active.tendering' and auction.tenderPeriod.endDate <= now:
-        LOGGER.info('Switched auction %s to %s',
-                    auction['id'],
-                    'active.auction',
-                    extra=context_unpack(request,
-                                         {'MESSAGE_ID': 'switched_auction_active.auction'}))
         auction.status = 'active.auction'
         remove_draft_bids(request)
         check_bids(request)
         if auction.numberOfBids < 2 and auction.auctionPeriod:
             auction.auctionPeriod.startDate = None
-        return
+        log_auction_status_change(request, auction, auction.status)
+        return True
     elif auction.lots and auction.status == 'active.tendering' and auction.tenderPeriod.endDate <= now:
-        LOGGER.info('Switched auction %s to %s',
-                    auction['id'],
-                    'active.auction',
-                    extra=context_unpack(request,
-                                         {'MESSAGE_ID': 'switched_auction_active.auction'}))
         auction.status = 'active.auction'
         remove_draft_bids(request)
         check_bids(request)
         _ = [setattr(i.auctionPeriod, 'startDate', None)  # noqa: F841
              for i in auction.lots if i.numberOfBids < 2 and i.auctionPeriod]
-        return
+        log_auction_status_change(request, auction, auction.status)
+        return True
     elif not auction.lots and auction.status == 'active.awarded':
         standStillEnds = [
             a.complaintPeriod.endDate.astimezone(TZ)
@@ -80,13 +65,13 @@ def check_status_flash(request):
             if a.complaintPeriod.endDate
         ]
         if not standStillEnds:
-            return
+            return True
         standStillEnd = max(standStillEnds)
         if standStillEnd <= now:
             check_auction_status(request)
     elif auction.lots and auction.status in ['active.qualification', 'active.awarded']:
         if any([i['status'] in auction.block_complaint_status and i.relatedLot is None for i in auction.complaints]):
-            return
+            return True
         for lot in auction.lots:
             if lot['status'] != 'active':
                 continue
@@ -101,7 +86,7 @@ def check_status_flash(request):
             standStillEnd = max(standStillEnds)
             if standStillEnd <= now:
                 check_auction_status(request)
-                return
+                return True
 
 
 def check_auction_status(request):
@@ -157,32 +142,14 @@ def check_auction_status(request):
                 lot.status = 'complete'
         statuses = set([lot.status for lot in auction.lots])
         if statuses == set(['cancelled']):
-            LOGGER.info('Switched lot %s of auction %s to %s',
-                        lot.id,
-                        auction.id,
-                        'cancelled',
-                        extra=context_unpack(request,
-                                             {'MESSAGE_ID': 'switched_lot_cancelled'},
-                                             {'LOT_ID': lot.id}))
             adapter.pendify_auction_status('cancelled')
+            log_auction_status_change(request, auction, auction.status)
         elif not statuses.difference(set(['unsuccessful', 'cancelled'])):
-            LOGGER.info('Switched lot %s of auction %s to %s',
-                        lot.id,
-                        auction.id,
-                        'unsuccessful',
-                        extra=context_unpack(request,
-                                             {'MESSAGE_ID': 'switched_lot_unsuccessful'},
-                                             {'LOT_ID': lot.id}))
             adapter.pendify_auction_status('unsuccessful')
+            log_auction_status_change(request, auction, auction.status)
         elif not statuses.difference(set(['complete', 'unsuccessful', 'cancelled'])):
-            LOGGER.info('Switched lot %s of auction %s to %s',
-                        lot.id,
-                        auction.id,
-                        'complete',
-                        extra=context_unpack(request,
-                                             {'MESSAGE_ID': 'switched_lot_complete'},
-                                             {'LOT_ID': lot.id}))
             adapter.pendify_auction_status('complete')
+            log_auction_status_change(request, auction, auction.status)
     else:
         pending_complaints = any([
             i.status in auction.block_complaint_status
@@ -203,21 +170,12 @@ def check_auction_status(request):
         last_award_status = auction.awards[-1].status if auction.awards else ''
         if not pending_complaints and not pending_awards_complaints and stand_still_time_expired \
                 and last_award_status == 'unsuccessful':
-            LOGGER.info(
-                'Switched auction %s to %s', auction.id, 'unsuccessful', extra=context_unpack(
-                    request, {
-                        'MESSAGE_ID': 'switched_auction_unsuccessful'}))
             adapter.pendify_auction_status('unsuccessful')
+            log_auction_status_change(request, auction, auction.status)
         if not pending_complaints and not pending_awards_complaints and stand_still_time_expired \
                 and last_award_status == 'unsuccessful':
-            LOGGER.info(
-                'Switched auction %s to %s', auction.id, 'unsuccessful', extra=context_unpack(
-                    request, {
-                        'MESSAGE_ID': 'switched_auction_unsuccessful'}))
             adapter.pendify_auction_status('unsuccessful')
+            log_auction_status_change(request, auction, auction.status)
         if auction.contracts and auction.contracts[-1].status == 'active':
-            LOGGER.info(
-                'Switched auction %s to %s', auction.id, 'unsuccessful', extra=context_unpack(
-                    request, {
-                        'MESSAGE_ID': 'switched_auction_complete'}))
             adapter.pendify_auction_status('complete')
+            log_auction_status_change(request, auction, auction.status)
