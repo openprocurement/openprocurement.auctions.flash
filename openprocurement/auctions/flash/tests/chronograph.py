@@ -27,9 +27,6 @@ from openprocurement.auctions.flash.tests.blanks.chronograph_blanks import (
     switch_to_tendering_auctionPeriod,
     # AuctionSwitchQualificationResourceTest
     switch_to_qualification,
-    # AuctionAuctionPeriodResourceTest
-    set_auction_period,
-    reset_auction_period,
 )
 
 
@@ -72,16 +69,6 @@ class AuctionLotSwitchAuctionResourceTest(AuctionSwitchAuctionResourceTest):
 class AuctionLotSwitchUnsuccessfulResourceTest(
     AuctionSwitchUnsuccessfulResourceTest
 ):
-    initial_lots = test_lots
-
-
-class AuctionAuctionPeriodResourceTest(BaseAuctionWebTest):
-    initial_bids = test_bids
-    test_set_auction_period = snitch(set_auction_period)
-    test_reset_auction_period = snitch(reset_auction_period)
-
-
-class AuctionLotAuctionPeriodResourceTest(AuctionAuctionPeriodResourceTest):
     initial_lots = test_lots
 
 
@@ -139,8 +126,6 @@ def suite():
     ))
     tests.addTest(unittest.makeSuite(AuctionLotSwitchAuctionResourceTest))
     tests.addTest(unittest.makeSuite(AuctionLotSwitchUnsuccessfulResourceTest))
-    tests.addTest(unittest.makeSuite(AuctionAuctionPeriodResourceTest))
-    tests.addTest(unittest.makeSuite(AuctionLotAuctionPeriodResourceTest))
     tests.addTest(unittest.makeSuite(AuctionComplaintSwitchResourceTest))
     tests.addTest(unittest.makeSuite(AuctionLotComplaintSwitchResourceTest))
     tests.addTest(unittest.makeSuite(AuctionAwardComplaintSwitchResourceTest))

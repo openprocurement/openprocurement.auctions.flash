@@ -19,6 +19,9 @@ from openprocurement.auctions.flash.tests.base import (
 
 from openprocurement.auctions.flash.tests.blanks.auction_blanks import (
     post_auction_auction,
+    # FlashAuctionBridgePeriodPatch
+    set_auction_period,
+    reset_auction_period
 )
 
 
@@ -952,6 +955,12 @@ class AuctionFeaturesAuctionResourceTest(BaseAuctionWebTest):
     test_get_auction_auction = snitch(get_auction_features_auction)
 
 
+class FlashAuctionBridgePeriodPatchTest(BaseAuctionWebTest):
+    initial_bids = test_bids
+    test_set_auction_period = snitch(set_auction_period)
+    test_reset_auction_period = snitch(reset_auction_period)
+
+
 def suite():
     tests = unittest.TestSuite()
     tests.addTest(unittest.makeSuite(AuctionAuctionResourceTest))
@@ -959,6 +968,7 @@ def suite():
     tests.addTest(unittest.makeSuite(AuctionLotAuctionResourceTest))
     tests.addTest(unittest.makeSuite(AuctionMultipleLotAuctionResourceTest))
     tests.addTest(unittest.makeSuite(AuctionFeaturesAuctionResourceTest))
+    tests.addTest(unittest.makeSuite(FlashAuctionBridgePeriodPatchTest))
     return tests
 
 
